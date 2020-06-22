@@ -20,7 +20,7 @@ atomic intrinsics. This library will try to use the _Interlocked* intrinsics ins
 use inlined assembly (x86 only).
 
 Supported compilers are Visual Studio back to VC6, GCC and Clang. If you need support for a different compiler
-I'm happy to add support (pull requests appreciated). This library current assumes the `int` data types is
+I'm happy to add support (pull requests appreciated). This library currently assumes the `int` data type is
 32 bits.
 
 
