@@ -34,14 +34,14 @@ Differences With C11
 For praticality, this is not a drop-in replacement for C11's `stdthread.h`. Below are the main differences
 between c89thread and stdthread.
 
-    * All operations require an explicit size which is specified by the name of then function, and only 8-,
-      16-, 32- and 64-bit operations are supported. Objects of an arbitrary sizes are not supported.
-    * Some extra APIs are included:
-      - `c89atomic_compare_and_swap_*()`
-      - `c89atomic_test_and_set_*()`
-      - `c89atomic_clear_*()`
-    * All APIs are namespaced with `c89`.
-    * `c89atomic_*` data types are undecorated.
+  * All operations require an explicit size which is specified by the name of then function, and only 8-,
+    16-, 32- and 64-bit operations are supported. Objects of an arbitrary sizes are not supported.
+  * Some extra APIs are included:
+    - `c89atomic_compare_and_swap_*()`
+    - `c89atomic_test_and_set_*()`
+    - `c89atomic_clear_*()`
+  * All APIs are namespaced with `c89`.
+  * `c89atomic_*` data types are undecorated.
 
 
 Compare Exchange
