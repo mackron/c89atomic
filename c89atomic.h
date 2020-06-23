@@ -89,56 +89,6 @@ directly, which is atomic and more efficient. Alternatively you'll need to use a
 to `expected`, upgrade your compiler, or use a different library.
 
 
-Compare Exchange
-----------------
-This library implements a simple compare-and-swap function called `c89atomic_compare_and_swap_*()` which is
-slightly different to C11's `atomic_compare_exchange_*()`. This is named differently to distinguish between
-the two. `c89atomic_compare_and_swap_*()` returns the old value as the return value, whereas
-`atomic_compare_exchange_*()` will return it through a parameter and supports explicit memory orders for
-success and failure cases.
-
-With Visual Studio and versions of GCC earlier than 4.7, an implementation of `atomic_compare_exchange_*()`
-is included which is implemented in terms of `c89atomic_compare_and_swap_*()`, but there's subtle details to be
-aware of with this implementation. Note that the following only applies for Visual Studio and versions of GCC
-earlier than 4.7. Later versions of GCC and Clang use the `__atomic_compare_exchange_n()` intrinsic directly
-and are not subject to the following.
-
-Below is the 32-bit implementation of `c89atomic_compare_exchange_strong_explicit_32()` which is implemented
-the same for the weak versions and other sizes, and only for Visual Studio and old versions of GCC (prior to
-4.7):
-
-```c
-c89atomic_bool c89atomic_compare_exchange_strong_explicit_32(volatile c89atomic_uint32* dst,
-                                                             volatile c89atomic_uint32* expected,
-                                                             c89atomic_uint32 desired,
-                                                             c89atomic_memory_order successOrder,
-                                                             c89atomic_memory_order failureOrder)
-{
-    c89atomic_uint32 expectedValue;
-    c89atomic_uint32 result;
-
-    expectedValue = c89atomic_load_explicit_32(expected, c89atomic_memory_order_seq_cst);
-    result = c89atomic_compare_and_swap_32(dst, expectedValue, desired);
-    if (result == expectedValue) {
-        return 1;
-    } else {
-        c89atomic_store_explicit_32(expected, result, failureOrder);
-        return 0;
-    }
-}
-```
-
-The call to `c89atomic_store_explicit_32()` is not atomic with respect to the main compare-and-swap operation
-which may cause problems when `expected` points to memory that is shared between threads. This only becomes an
-issue if `expected` can be accessed from multiple threads at the same time which for the most part will never
-happen because a compare-and-swap will almost always be used in a loop with a local variable being used for the
-expected value.
-
-If the above is a concern, you should consider reworking your code to use `c89atomic_compare_and_swap_*()`
-directly, which is atomic and more efficient. Alternatively you'll need to use a lock to synchronize access
-to `expected`, upgrade your compiler, or use a different library.
-
-
 Types and Functions
 -------------------
 The following types and functions are implemented:
