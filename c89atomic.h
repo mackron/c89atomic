@@ -29,7 +29,7 @@ Differences With C11
 For praticality, this is not a drop-in replacement for C11's `stdthread.h`. Below are the main differences
 between c89thread and stdthread.
 
-    * All operations require an explicit size which is specified by the name of then function, and only 8-,
+    * All operations require an explicit size which is specified by the name of the function, and only 8-,
       16-, 32- and 64-bit operations are supported. Objects of an arbitrary sizes are not supported.
     * Some extra APIs are included:
       - `c89atomic_compare_and_swap_*()`
@@ -291,14 +291,6 @@ The following types and functions are implemented:
 |                                         | c89atomic_compare_and_swap_32                 |
 |                                         | c89atomic_compare_and_swap_64                 |
 |                                         | c89atomic_compare_and_swap_ptr                |
-|                                         | c89atomic_exchange_nand_8                     |
-|                                         | c89atomic_exchange_nand_16                    |
-|                                         | c89atomic_exchange_nand_32                    |
-|                                         | c89atomic_exchange_nand_64                    |
-|                                         | c89atomic_exchange_nand_explicit_8            |
-|                                         | c89atomic_exchange_nand_explicit_16           |
-|                                         | c89atomic_exchange_nand_explicit_32           |
-|                                         | c89atomic_exchange_nand_explicit_64           |
 |                                         | c89atomic_compiler_fence                      |
 +-----------------------------------------+-----------------------------------------------+
 */
@@ -837,64 +829,6 @@ typedef unsigned char      c89atomic_flag;
         return oldValue;
     }
 
-
-    /* fetch_and() */
-    static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_nand_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, int order)
-    {
-        volatile c89atomic_uint8 oldValue;
-        volatile c89atomic_uint8 newValue;
-
-        do {
-            oldValue = *dst;
-            newValue = ~(oldValue & src);
-        } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
-
-        (void)order;
-        return oldValue;
-    }
-
-    static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_nand_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, int order)
-    {
-        volatile c89atomic_uint16 oldValue;
-        volatile c89atomic_uint16 newValue;
-
-        do {
-            oldValue = *dst;
-            newValue = ~(oldValue & src);
-        } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
-
-        (void)order;
-        return oldValue;
-    }
-
-    static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_nand_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, int order)
-    {
-        volatile c89atomic_uint32 oldValue;
-        volatile c89atomic_uint32 newValue;
-
-        do {
-            oldValue = *dst;
-            newValue = ~(oldValue & src);
-        } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
-
-        (void)order;
-        return oldValue;
-    }
-
-    static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_nand_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, int order)
-    {
-        volatile c89atomic_uint64 oldValue;
-        volatile c89atomic_uint64 newValue;
-
-        do {
-            oldValue = *dst;
-            newValue = ~(oldValue & src);
-        } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
-
-        (void)order;
-        return oldValue;
-    }
-
     #define c89atomic_test_and_set_explicit_8( dst, order) c89atomic_exchange_explicit_8 (dst, 1, order)
     #define c89atomic_test_and_set_explicit_16(dst, order) c89atomic_exchange_explicit_16(dst, 1, order)
     #define c89atomic_test_and_set_explicit_32(dst, order) c89atomic_exchange_explicit_32(dst, 1, order)
@@ -990,11 +924,6 @@ typedef unsigned char      c89atomic_flag;
     #define c89atomic_fetch_and_explicit_16(dst, src, order)        __atomic_fetch_and(dst, src, order)
     #define c89atomic_fetch_and_explicit_32(dst, src, order)        __atomic_fetch_and(dst, src, order)
     #define c89atomic_fetch_and_explicit_64(dst, src, order)        __atomic_fetch_and(dst, src, order)
-    
-    #define c89atomic_fetch_nand_explicit_8( dst, src, order)       __atomic_fetch_nand(dst, src, order)
-    #define c89atomic_fetch_nand_explicit_16(dst, src, order)       __atomic_fetch_nand(dst, src, order)
-    #define c89atomic_fetch_nand_explicit_32(dst, src, order)       __atomic_fetch_nand(dst, src, order)
-    #define c89atomic_fetch_nand_explicit_64(dst, src, order)       __atomic_fetch_nand(dst, src, order)
 
     #define c89atomic_compare_and_swap_8 (dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired)
     #define c89atomic_compare_and_swap_16(dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired)
@@ -1082,11 +1011,6 @@ typedef unsigned char      c89atomic_flag;
     #define c89atomic_fetch_and_explicit_16(dst, src, order)        __sync_fetch_and_and(dst, src)
     #define c89atomic_fetch_and_explicit_32(dst, src, order)        __sync_fetch_and_and(dst, src)
     #define c89atomic_fetch_and_explicit_64(dst, src, order)        __sync_fetch_and_and(dst, src)
-
-    #define c89atomic_fetch_nand_explicit_8( dst, src, order)       __sync_fetch_nand_and(dst, src)
-    #define c89atomic_fetch_nand_explicit_16(dst, src, order)       __sync_fetch_nand_and(dst, src)
-    #define c89atomic_fetch_nand_explicit_32(dst, src, order)       __sync_fetch_nand_and(dst, src)
-    #define c89atomic_fetch_nand_explicit_64(dst, src, order)       __sync_fetch_nand_and(dst, src)
 
     #define c89atomic_compare_and_swap_8( dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired)
     #define c89atomic_compare_and_swap_16(dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired)
@@ -1302,11 +1226,6 @@ c89atomic_bool c89atomic_compare_exchange_strong_explicit_64(volatile c89atomic_
 #define c89atomic_fetch_and_16(dst, src)                                c89atomic_fetch_and_explicit_16(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_fetch_and_32(dst, src)                                c89atomic_fetch_and_explicit_32(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_fetch_and_64(dst, src)                                c89atomic_fetch_and_explicit_64(dst, src, c89atomic_memory_order_seq_cst)
-
-#define c89atomic_fetch_nand_8( dst, src)                               c89atomic_fetch_nand_explicit_8 (dst, src, c89atomic_memory_order_seq_cst)
-#define c89atomic_fetch_nand_16(dst, src)                               c89atomic_fetch_nand_explicit_16(dst, src, c89atomic_memory_order_seq_cst)
-#define c89atomic_fetch_nand_32(dst, src)                               c89atomic_fetch_nand_explicit_32(dst, src, c89atomic_memory_order_seq_cst)
-#define c89atomic_fetch_nand_64(dst, src)                               c89atomic_fetch_nand_explicit_64(dst, src, c89atomic_memory_order_seq_cst)
 
 #if defined(__cplusplus)
 }
