@@ -252,6 +252,13 @@ The following types and functions are implemented:
 extern "C" {
 #endif
 
+#if defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wlong-long"
+    #if defined(__clang__)
+        #pragma GCC diagnostic ignored "-Wc++11-long-long"
+    #endif
+#endif
 typedef   signed char      c89atomic_int8;
 typedef unsigned char      c89atomic_uint8;
 typedef   signed short     c89atomic_int16;
@@ -264,6 +271,9 @@ typedef unsigned __int64   c89atomic_uint64;
 #else
 typedef unsigned long long c89atomic_int64;
 typedef unsigned long long c89atomic_uint64;
+#endif
+#if defined(__GNUC__)
+    #pragma GCC diagnostic pop
 #endif
 
 typedef int                c89atomic_memory_order;
