@@ -5,7 +5,7 @@ enable the use of atomics in a mostly consistent manner to modern C, while still
 older compilers. This is *not* a drop-in replacement for C11 atomics, but is very similar. Only limited testing
 has been done so use at your own risk. I'm happy to accept feedback and pull requests with bug fixes.
 
-When compiling with GCC and Clang, this library will translate to a one-to-one wrapper around the __atomic_*
+When compiling with GCC and Clang, this library will translate to a one-to-one wrapper around the `__atomic_*`
 intrinsics provided by the compiler.
 
 When compiling with Visual C++ things are a bit more complicated because it does not have support for C11 style
