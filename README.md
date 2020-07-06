@@ -9,7 +9,7 @@ When compiling with GCC and Clang, this library will translate to a one-to-one w
 intrinsics provided by the compiler.
 
 When compiling with Visual C++ things are a bit more complicated because it does not have support for C11 style
-atomic intrinsics. This library will try to use the _Interlocked* intrinsics instead, and if unavailable will
+atomic intrinsics. This library will try to use the `_Interlocked*` intrinsics instead, and if unavailable will
 use inlined assembly (x86 only).
 
 Supported compilers are Visual Studio back to VC6, GCC and Clang. If you need support for a different compiler
