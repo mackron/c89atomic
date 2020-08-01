@@ -233,7 +233,7 @@ void c89atomic_test__basic__compare_exchange_strong()
         if (a == c && b == 0 && r == 1) {
             /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
             a = 0;
-            b = a + 1;
+            b = (c89atomic_uint8)(a + 1);
             r = c89atomic_compare_exchange_strong_8(&a, &b, c);
             if (a == 0 && b == 0 && r == 0) {
                 printf("PASSED\n");
@@ -255,7 +255,7 @@ void c89atomic_test__basic__compare_exchange_strong()
         if (a == c && b == 0 && r == 1) {
             /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
             a = 0;
-            b = a + 1;
+            b = (c89atomic_uint16)(a + 1);
             r = c89atomic_compare_exchange_strong_16(&a, &b, c);
             if (a == 0 && b == 0 && r == 0) {
                 printf("PASSED\n");
@@ -329,7 +329,7 @@ void c89atomic_test__basic__compare_exchange_weak()
         if (a == c && b == 0 && r == 1) {
             /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
             a = 0;
-            b = a + 1;
+            b = (c89atomic_uint8)(a + 1);
             r = c89atomic_compare_exchange_weak_8(&a, &b, c);
             if (a == 0 && b == 0 && r == 0) {
                 printf("PASSED\n");
@@ -351,7 +351,7 @@ void c89atomic_test__basic__compare_exchange_weak()
         if (a == c && b == 0 && r == 1) {
             /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
             a = 0;
-            b = a + 1;
+            b = (c89atomic_uint16)(a + 1);
             r = c89atomic_compare_exchange_weak_16(&a, &b, c);
             if (a == 0 && b == 0 && r == 0) {
                 printf("PASSED\n");
