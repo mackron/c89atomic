@@ -803,7 +803,7 @@ typedef unsigned char           c89atomic_flag;
 
     #define c89atomic_flag_test_and_set_explicit(ptr, order)    (c89atomic_flag)c89atomic_test_and_set_explicit_8(ptr, order)
     #define c89atomic_flag_clear_explicit(ptr, order)           c89atomic_clear_explicit_8(ptr, order)
-#elif defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC__ >= 7)))
+#elif defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
     /* Modern GCC atomic built-ins. */
     #define C89ATOMIC_HAS_NATIVE_COMPARE_EXCHANGE
     #define C89ATOMIC_HAS_NATIVE_IS_LOCK_FREE
