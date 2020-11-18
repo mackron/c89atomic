@@ -744,10 +744,10 @@ int main(int argc, char** argv)
     c89atomic_test__basic__fetch_and();
 
     /* Putting these functions here for testing that they compile. */
-    c89atomic_is_lock_free_8(NULL);
-    c89atomic_is_lock_free_16(NULL);
-    c89atomic_is_lock_free_32(NULL);
-    c89atomic_is_lock_free_64(NULL);
+    (void)c89atomic_is_lock_free_8(NULL);
+    (void)c89atomic_is_lock_free_16(NULL);
+    (void)c89atomic_is_lock_free_32(NULL);
+    (void)c89atomic_is_lock_free_64(NULL);
     c89atomic_compiler_fence();
     c89atomic_thread_fence(c89atomic_memory_order_seq_cst);
     c89atomic_signal_fence(c89atomic_memory_order_seq_cst);
