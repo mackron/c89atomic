@@ -386,12 +386,23 @@ typedef unsigned char           c89atomic_flag;
     #else
         /* Old Visual C++ and OpenWatcom. */
         #if defined(C89ATOMIC_X86)
-            /* x86. Implemented via inlined assembly. */
+            /*
+            x86. Implemented via inlined assembly.
+
+            This supports both MSVC and OpenWatcom. OpenWatcom is a little bit too pedantic with it's warnings. A few notes:
+              - The return value of these functions are defined by the AL/AX/EAX/EAX:EDX registers which means an explicit return statement
+                is not actually necessary. This is helpful for performance reasons because it means we can avoid the cost of a declaring a
+                local variable and moving the value in EAX into that variable, only to then return it. However, unfortunately OpenWatcom
+                thinks this is a mistake and tries to be helpful by throwing a warning. To work around we're going to declare a "result"
+                variable and incur this theoretical cost.
+              - Variables that are assigned within the inline assembly will not be detected as such, and OpenWatcom will throw a warning
+                about the variable being used without being assigned. To work around this we just initialize our local variables to 0.
+            */
 
             /* thread_fence() */
             static C89ATOMIC_INLINE void __stdcall c89atomic_thread_fence(int order)
             {
-                volatile c89atomic_uint32 barrier;
+                volatile c89atomic_uint32 barrier = 0;  /* Redundant assignment to 0 to silence a warning on OpenWatcom. */
 
                 (void)order;
                 __asm {
@@ -399,104 +410,151 @@ typedef unsigned char           c89atomic_flag;
                 }
             }
 
-
             /* exchange() */
             static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_exchange_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, int order)
             {
+                c89atomic_uint8 result = 0;
+                
                 (void)order;
                 __asm {
                     mov ecx, dst
                     mov al,  src
                     lock xchg [ecx], al
+                    mov result, al
                 }
+
+                return result;
             }
 
             static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_exchange_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, int order)
             {
+                c89atomic_uint16 result = 0;
+                
                 (void)order;
                 __asm {
                     mov ecx, dst
                     mov ax,  src
                     lock xchg [ecx], ax
+                    mov result, ax
                 }
+
+                return result;
             }
 
             static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_exchange_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, int order)
             {
+                c89atomic_uint32 result = 0;
+                
                 (void)order;
                 __asm {
                     mov ecx, dst
                     mov eax, src
                     lock xchg [ecx], eax
+                    mov result, eax
                 }
+
+                return result;
             }
 
 
             /* fetch_add() */
             static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_add_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, int order)
             {
+                c89atomic_uint8 result = 0;
+                
                 (void)order;
                 __asm {
                     mov ecx, dst
                     mov al,  src
                     lock xadd [ecx], al
+                    mov result, al
                 }
+
+                return result;
             }
 
             static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_add_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, int order)
             {
+                c89atomic_uint16 result = 0;
+                
                 (void)order;
                 __asm {
                     mov ecx, dst
                     mov ax,  src
                     lock xadd [ecx], ax
+                    mov result, ax
                 }
+
+                return result;
             }
 
             static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_add_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, int order)
             {
+                c89atomic_uint32 result = 0;
+                
                 (void)order;
                 __asm {
                     mov ecx, dst
                     mov eax, src
                     lock xadd [ecx], eax
+                    mov result, eax
                 }
+
+                return result;
             }
 
 
             /* compare_and_swap() */
             static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 desired)
             {
+                c89atomic_uint8 result = 0;
+                
                 __asm {
                     mov ecx, dst
                     mov al,  expected
                     mov dl,  desired
                     lock cmpxchg [ecx], dl  /* Writes to EAX which MSVC will treat as the return value. */
+                    mov result, al
                 }
+
+                return result;
             }
 
             static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 desired)
             {
+                c89atomic_uint16 result = 0;
+                
                 __asm {
                     mov ecx, dst
                     mov ax,  expected
                     mov dx,  desired
                     lock cmpxchg [ecx], dx  /* Writes to EAX which MSVC will treat as the return value. */
+                    mov result, ax
                 }
+
+                return result;
             }
 
             static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 desired)
             {
+                c89atomic_uint32 result = 0;
+                
                 __asm {
                     mov ecx, dst
                     mov eax, expected
                     mov edx, desired
                     lock cmpxchg [ecx], edx /* Writes to EAX which MSVC will treat as the return value. */
+                    mov result, eax
                 }
+
+                return result;
             }
 
             static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 desired)
             {
+                c89atomic_uint32 resultEAX = 0;
+                c89atomic_uint32 resultEDX = 0;
+                
                 __asm {
                     mov esi, dst    /* From Microsoft documentation: "... you don't need to preserve the EAX, EBX, ECX, EDX, ESI, or EDI registers." Choosing ESI since it's the next available one in their list. */
                     mov eax, dword ptr expected
@@ -504,7 +562,11 @@ typedef unsigned char           c89atomic_flag;
                     mov ebx, dword ptr desired
                     mov ecx, dword ptr desired + 4
                     lock cmpxchg8b qword ptr [esi]  /* Writes to EAX:EDX which MSVC will treat as the return value. */
+                    mov resultEAX, eax
+                    mov resultEDX, edx
                 }
+
+                return ((c89atomic_uint64)resultEDX << 32) | resultEAX;
             }
         #else
             /* x64 or ARM. Should never get here because these are not valid targets for older versions of Visual Studio. */

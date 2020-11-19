@@ -4,6 +4,8 @@ Tests basic logic of all atomic functions. Does not test atomicity.
 #include "../c89atomic.h"
 #include <stdio.h>
 
+/* Need to use a non-0 value for the old value to test byte ordering stuff properly. */
+#define OLD_VAL 42
 
 void c89atomic_test__basic__flag_test_and_set()
 {
@@ -102,7 +104,7 @@ void c89atomic_test__basic__store()
 
     printf("    c89atomic_store_8:                    ");
     {
-        c89atomic_uint8 a = 0;
+        c89atomic_uint8 a = OLD_VAL;
         c89atomic_uint8 b = 123;
         c89atomic_store_8(&a, b);
 
@@ -115,7 +117,7 @@ void c89atomic_test__basic__store()
 
     printf("    c89atomic_store_16:                   ");
     {
-        c89atomic_uint16 a = 0;
+        c89atomic_uint16 a = OLD_VAL;
         c89atomic_uint16 b = 1234;
         c89atomic_store_16(&a, b);
 
@@ -128,7 +130,7 @@ void c89atomic_test__basic__store()
 
     printf("    c89atomic_store_32:                   ");
     {
-        c89atomic_uint32 a = 0;
+        c89atomic_uint32 a = OLD_VAL;
         c89atomic_uint32 b = 123456;
         c89atomic_store_32(&a, b);
 
@@ -141,7 +143,7 @@ void c89atomic_test__basic__store()
 
     printf("    c89atomic_store_64:                   ");
     {
-        c89atomic_uint64 a = 0;
+        c89atomic_uint64 a = OLD_VAL;
         c89atomic_uint64 b = 123456789012;
         c89atomic_store_64(&a, b);
 
@@ -161,8 +163,8 @@ void c89atomic_test__basic__exchange()
 
     printf("    c89atomic_exchange_8:                 ");
     {
-        c89atomic_uint8 a = 0;
-        c89atomic_uint8 b = 0;
+        c89atomic_uint8 a = OLD_VAL;
+        c89atomic_uint8 b = OLD_VAL;
         c89atomic_uint8 c = 123;
         c89atomic_uint8 r = c89atomic_exchange_8(&b, c);
 
@@ -175,8 +177,8 @@ void c89atomic_test__basic__exchange()
 
     printf("    c89atomic_exchange_16:                ");
     {
-        c89atomic_uint16 a = 0;
-        c89atomic_uint16 b = 0;
+        c89atomic_uint16 a = OLD_VAL;
+        c89atomic_uint16 b = OLD_VAL;
         c89atomic_uint16 c = 1234;
         c89atomic_uint16 r = c89atomic_exchange_16(&b, c);
 
@@ -189,8 +191,8 @@ void c89atomic_test__basic__exchange()
 
     printf("    c89atomic_exchange_32:                ");
     {
-        c89atomic_uint32 a = 0;
-        c89atomic_uint32 b = 0;
+        c89atomic_uint32 a = OLD_VAL;
+        c89atomic_uint32 b = OLD_VAL;
         c89atomic_uint32 c = 123456;
         c89atomic_uint32 r = c89atomic_exchange_32(&b, c);
 
@@ -203,8 +205,8 @@ void c89atomic_test__basic__exchange()
 
     printf("    c89atomic_exchange_64:                ");
     {
-        c89atomic_uint64 a = 0;
-        c89atomic_uint64 b = 0;
+        c89atomic_uint64 a = OLD_VAL;
+        c89atomic_uint64 b = OLD_VAL;
         c89atomic_uint64 c = 123456789012;
         c89atomic_uint64 r = c89atomic_exchange_64(&b, c);
 
@@ -225,17 +227,17 @@ void c89atomic_test__basic__compare_exchange_strong()
 
     printf("    c89atomic_compare_exchange_strong_8:  ");
     {
-        c89atomic_uint8 a = 0;
+        c89atomic_uint8 a = OLD_VAL;
         c89atomic_uint8 b = a;
         c89atomic_uint8 c = 123;
         c89atomic_bool  r = c89atomic_compare_exchange_strong_8(&a, &b, c);
 
-        if (a == c && b == 0 && r == 1) {
-            /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
-            a = 0;
+        if (a == c && b == OLD_VAL && r == 1) {
+            /* Negative case. Expecting a to remain unchanged, b to be set to OLD_VAL (previous value of a) and the result to be false. */
+            a = OLD_VAL;
             b = (c89atomic_uint8)(a + 1);
             r = c89atomic_compare_exchange_strong_8(&a, &b, c);
-            if (a == 0 && b == 0 && r == 0) {
+            if (a == OLD_VAL && b == OLD_VAL && r == 0) {
                 printf("PASSED\n");
             } else {
                 printf("FAILED\n");
@@ -247,17 +249,17 @@ void c89atomic_test__basic__compare_exchange_strong()
 
     printf("    c89atomic_compare_exchange_strong_16: ");
     {
-        c89atomic_uint16 a = 0;
+        c89atomic_uint16 a = OLD_VAL;
         c89atomic_uint16 b = a;
         c89atomic_uint16 c = 1234;
         c89atomic_bool   r = c89atomic_compare_exchange_strong_16(&a, &b, c);
 
-        if (a == c && b == 0 && r == 1) {
-            /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
-            a = 0;
+        if (a == c && b == OLD_VAL && r == 1) {
+            /* Negative case. Expecting a to remain unchanged, b to be set to OLD_VAL (previous value of a) and the result to be false. */
+            a = OLD_VAL;
             b = (c89atomic_uint16)(a + 1);
             r = c89atomic_compare_exchange_strong_16(&a, &b, c);
-            if (a == 0 && b == 0 && r == 0) {
+            if (a == OLD_VAL && b == OLD_VAL && r == 0) {
                 printf("PASSED\n");
             } else {
                 printf("FAILED\n");
@@ -269,17 +271,17 @@ void c89atomic_test__basic__compare_exchange_strong()
 
     printf("    c89atomic_compare_exchange_strong_32: ");
     {
-        c89atomic_uint32 a = 0;
+        c89atomic_uint32 a = OLD_VAL;
         c89atomic_uint32 b = a;
         c89atomic_uint32 c = 123456;
         c89atomic_bool   r = c89atomic_compare_exchange_strong_32(&a, &b, c);
 
-        if (a == c && b == 0 && r == 1) {
-            /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
-            a = 0;
+        if (a == c && b == OLD_VAL && r == 1) {
+            /* Negative case. Expecting a to remain unchanged, b to be set to OLD_VAL (previous value of a) and the result to be false. */
+            a = OLD_VAL;
             b = a + 1;
             r = c89atomic_compare_exchange_strong_32(&a, &b, c);
-            if (a == 0 && b == 0 && r == 0) {
+            if (a == OLD_VAL && b == OLD_VAL && r == 0) {
                 printf("PASSED\n");
             } else {
                 printf("FAILED\n");
@@ -291,17 +293,17 @@ void c89atomic_test__basic__compare_exchange_strong()
 
     printf("    c89atomic_compare_exchange_strong_64: ");
     {
-        c89atomic_uint64 a = 0;
+        c89atomic_uint64 a = OLD_VAL;
         c89atomic_uint64 b = a;
         c89atomic_uint64 c = 123456789012;
         c89atomic_bool   r = c89atomic_compare_exchange_strong_64(&a, &b, c);
 
-        if (a == c && b == 0 && r == 1) {
-            /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
-            a = 0;
+        if (a == c && b == OLD_VAL && r == 1) {
+            /* Negative case. Expecting a to remain unchanged, b to be set to OLD_VAL (previous value of a) and the result to be false. */
+            a = OLD_VAL;
             b = a + 1;
             r = c89atomic_compare_exchange_strong_64(&a, &b, c);
-            if (a == 0 && b == 0 && r == 0) {
+            if (a == OLD_VAL && b == OLD_VAL && r == 0) {
                 printf("PASSED\n");
             } else {
                 printf("FAILED\n");
@@ -321,17 +323,17 @@ void c89atomic_test__basic__compare_exchange_weak()
 
     printf("    c89atomic_compare_exchange_weak_8:    ");
     {
-        c89atomic_uint8 a = 0;
+        c89atomic_uint8 a = OLD_VAL;
         c89atomic_uint8 b = a;
         c89atomic_uint8 c = 123;
         c89atomic_bool  r = c89atomic_compare_exchange_weak_8(&a, &b, c);
 
-        if (a == c && b == 0 && r == 1) {
-            /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
-            a = 0;
+        if (a == c && b == OLD_VAL && r == 1) {
+            /* Negative case. Expecting a to remain unchanged, b to be set to OLD_VAL (previous value of a) and the result to be false. */
+            a = OLD_VAL;
             b = (c89atomic_uint8)(a + 1);
             r = c89atomic_compare_exchange_weak_8(&a, &b, c);
-            if (a == 0 && b == 0 && r == 0) {
+            if (a == OLD_VAL && b == OLD_VAL && r == 0) {
                 printf("PASSED\n");
             } else {
                 printf("FAILED\n");
@@ -343,17 +345,17 @@ void c89atomic_test__basic__compare_exchange_weak()
 
     printf("    c89atomic_compare_exchange_weak_16:   ");
     {
-        c89atomic_uint16 a = 0;
+        c89atomic_uint16 a = OLD_VAL;
         c89atomic_uint16 b = a;
         c89atomic_uint16 c = 1234;
         c89atomic_bool   r = c89atomic_compare_exchange_weak_16(&a, &b, c);
 
-        if (a == c && b == 0 && r == 1) {
-            /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
-            a = 0;
+        if (a == c && b == OLD_VAL && r == 1) {
+            /* Negative case. Expecting a to remain unchanged, b to be set to OLD_VAL (previous value of a) and the result to be false. */
+            a = OLD_VAL;
             b = (c89atomic_uint16)(a + 1);
             r = c89atomic_compare_exchange_weak_16(&a, &b, c);
-            if (a == 0 && b == 0 && r == 0) {
+            if (a == OLD_VAL && b == OLD_VAL && r == 0) {
                 printf("PASSED\n");
             } else {
                 printf("FAILED\n");
@@ -365,17 +367,17 @@ void c89atomic_test__basic__compare_exchange_weak()
 
     printf("    c89atomic_compare_exchange_weak_32:   ");
     {
-        c89atomic_uint32 a = 0;
+        c89atomic_uint32 a = OLD_VAL;
         c89atomic_uint32 b = a;
         c89atomic_uint32 c = 123456;
         c89atomic_bool   r = c89atomic_compare_exchange_weak_32(&a, &b, c);
 
-        if (a == c && b == 0 && r == 1) {
-            /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
-            a = 0;
+        if (a == c && b == OLD_VAL && r == 1) {
+            /* Negative case. Expecting a to remain unchanged, b to be set to OLD_VAL (previous value of a) and the result to be false. */
+            a = OLD_VAL;
             b = a + 1;
             r = c89atomic_compare_exchange_weak_32(&a, &b, c);
-            if (a == 0 && b == 0 && r == 0) {
+            if (a == OLD_VAL && b == OLD_VAL && r == 0) {
                 printf("PASSED\n");
             } else {
                 printf("FAILED\n");
@@ -387,17 +389,17 @@ void c89atomic_test__basic__compare_exchange_weak()
 
     printf("    c89atomic_compare_exchange_weak_64:   ");
     {
-        c89atomic_uint64 a = 0;
+        c89atomic_uint64 a = OLD_VAL;
         c89atomic_uint64 b = a;
         c89atomic_uint64 c = 123456789012;
         c89atomic_bool   r = c89atomic_compare_exchange_weak_64(&a, &b, c);
 
-        if (a == c && b == 0 && r == 1) {
-            /* Negative case. Expecting a to remain unchanged, b to be set to 0 (previous value of a) and the result to be false. */
-            a = 0;
+        if (a == c && b == OLD_VAL && r == 1) {
+            /* Negative case. Expecting a to remain unchanged, b to be set to OLD_VAL (previous value of a) and the result to be false. */
+            a = OLD_VAL;
             b = a + 1;
             r = c89atomic_compare_exchange_weak_64(&a, &b, c);
-            if (a == 0 && b == 0 && r == 0) {
+            if (a == OLD_VAL && b == OLD_VAL && r == 0) {
                 printf("PASSED\n");
             } else {
                 printf("FAILED\n");
@@ -417,7 +419,7 @@ void c89atomic_test__basic__fetch_add()
 
     printf("    c89atomic_fetch_add_8:                ");
     {
-        c89atomic_uint8 a = 0;
+        c89atomic_uint8 a = OLD_VAL;
         c89atomic_uint8 b = a;
         c89atomic_uint8 c = 123;
         c89atomic_uint8 r = c89atomic_fetch_add_8(&a, c);
@@ -431,7 +433,7 @@ void c89atomic_test__basic__fetch_add()
 
     printf("    c89atomic_fetch_add_16:               ");
     {
-        c89atomic_uint16 a = 0;
+        c89atomic_uint16 a = OLD_VAL;
         c89atomic_uint16 b = a;
         c89atomic_uint16 c = 1234;
         c89atomic_uint16 r = c89atomic_fetch_add_16(&a, c);
@@ -445,7 +447,7 @@ void c89atomic_test__basic__fetch_add()
 
     printf("    c89atomic_fetch_add_32:               ");
     {
-        c89atomic_uint32 a = 0;
+        c89atomic_uint32 a = OLD_VAL;
         c89atomic_uint32 b = a;
         c89atomic_uint32 c = 123456;
         c89atomic_uint32 r = c89atomic_fetch_add_32(&a, c);
@@ -459,7 +461,7 @@ void c89atomic_test__basic__fetch_add()
 
     printf("    c89atomic_fetch_add_64:               ");
     {
-        c89atomic_uint64 a = 0;
+        c89atomic_uint64 a = OLD_VAL;
         c89atomic_uint64 b = a;
         c89atomic_uint64 c = 123456789012;
         c89atomic_uint64 r = c89atomic_fetch_add_64(&a, c);
@@ -480,7 +482,7 @@ void c89atomic_test__basic__fetch_sub()
 
     printf("    c89atomic_fetch_sub_8:                ");
     {
-        c89atomic_uint8 a = 0;
+        c89atomic_uint8 a = OLD_VAL;
         c89atomic_uint8 b = a;
         c89atomic_uint8 c = 123;
         c89atomic_uint8 r = c89atomic_fetch_sub_8(&a, c);
@@ -494,7 +496,7 @@ void c89atomic_test__basic__fetch_sub()
 
     printf("    c89atomic_fetch_sub_16:               ");
     {
-        c89atomic_uint16 a = 0;
+        c89atomic_uint16 a = OLD_VAL;
         c89atomic_uint16 b = a;
         c89atomic_uint16 c = 1234;
         c89atomic_uint16 r = c89atomic_fetch_sub_16(&a, c);
@@ -508,7 +510,7 @@ void c89atomic_test__basic__fetch_sub()
 
     printf("    c89atomic_fetch_sub_32:               ");
     {
-        c89atomic_uint32 a = 0;
+        c89atomic_uint32 a = OLD_VAL;
         c89atomic_uint32 b = a;
         c89atomic_uint32 c = 123456;
         c89atomic_uint32 r = c89atomic_fetch_sub_32(&a, c);
@@ -522,7 +524,7 @@ void c89atomic_test__basic__fetch_sub()
 
     printf("    c89atomic_fetch_sub_64:               ");
     {
-        c89atomic_uint64 a = 0;
+        c89atomic_uint64 a = OLD_VAL;
         c89atomic_uint64 b = a;
         c89atomic_uint64 c = 123456789012;
         c89atomic_uint64 r = c89atomic_fetch_sub_64(&a, c);
@@ -544,7 +546,7 @@ void c89atomic_test__basic__fetch_or()
 
     printf("    c89atomic_fetch_or_8:                 ");
     {
-        c89atomic_uint8 a = 0;
+        c89atomic_uint8 a = OLD_VAL;
         c89atomic_uint8 b = a;
         c89atomic_uint8 c = 123;
         c89atomic_uint8 r = c89atomic_fetch_or_8(&a, c);
@@ -558,7 +560,7 @@ void c89atomic_test__basic__fetch_or()
 
     printf("    c89atomic_fetch_or_16:                ");
     {
-        c89atomic_uint16 a = 0;
+        c89atomic_uint16 a = OLD_VAL;
         c89atomic_uint16 b = a;
         c89atomic_uint16 c = 1234;
         c89atomic_uint16 r = c89atomic_fetch_or_16(&a, c);
@@ -572,7 +574,7 @@ void c89atomic_test__basic__fetch_or()
 
     printf("    c89atomic_fetch_or_32:                ");
     {
-        c89atomic_uint32 a = 0;
+        c89atomic_uint32 a = OLD_VAL;
         c89atomic_uint32 b = a;
         c89atomic_uint32 c = 123456;
         c89atomic_uint32 r = c89atomic_fetch_or_32(&a, c);
@@ -586,7 +588,7 @@ void c89atomic_test__basic__fetch_or()
 
     printf("    c89atomic_fetch_or_64:                ");
     {
-        c89atomic_uint64 a = 0;
+        c89atomic_uint64 a = OLD_VAL;
         c89atomic_uint64 b = a;
         c89atomic_uint64 c = 123456789012;
         c89atomic_uint64 r = c89atomic_fetch_or_64(&a, c);
@@ -607,7 +609,7 @@ void c89atomic_test__basic__fetch_xor()
 
     printf("    c89atomic_fetch_xor_8:                ");
     {
-        c89atomic_uint8 a = 0;
+        c89atomic_uint8 a = OLD_VAL;
         c89atomic_uint8 b = a;
         c89atomic_uint8 c = 123;
         c89atomic_uint8 r = c89atomic_fetch_xor_8(&a, c);
@@ -621,7 +623,7 @@ void c89atomic_test__basic__fetch_xor()
 
     printf("    c89atomic_fetch_xor_16:               ");
     {
-        c89atomic_uint16 a = 0;
+        c89atomic_uint16 a = OLD_VAL;
         c89atomic_uint16 b = a;
         c89atomic_uint16 c = 1234;
         c89atomic_uint16 r = c89atomic_fetch_xor_16(&a, c);
@@ -635,7 +637,7 @@ void c89atomic_test__basic__fetch_xor()
 
     printf("    c89atomic_fetch_xor_32:               ");
     {
-        c89atomic_uint32 a = 0;
+        c89atomic_uint32 a = OLD_VAL;
         c89atomic_uint32 b = a;
         c89atomic_uint32 c = 123456;
         c89atomic_uint32 r = c89atomic_fetch_xor_32(&a, c);
@@ -649,7 +651,7 @@ void c89atomic_test__basic__fetch_xor()
 
     printf("    c89atomic_fetch_xor_64:               ");
     {
-        c89atomic_uint64 a = 0;
+        c89atomic_uint64 a = OLD_VAL;
         c89atomic_uint64 b = a;
         c89atomic_uint64 c = 123456789012;
         c89atomic_uint64 r = c89atomic_fetch_xor_64(&a, c);
@@ -670,7 +672,7 @@ void c89atomic_test__basic__fetch_and()
 
     printf("    c89atomic_fetch_and_8:                ");
     {
-        c89atomic_uint8 a = 0;
+        c89atomic_uint8 a = OLD_VAL;
         c89atomic_uint8 b = a;
         c89atomic_uint8 c = 123;
         c89atomic_uint8 r = c89atomic_fetch_and_8(&a, c);
@@ -684,7 +686,7 @@ void c89atomic_test__basic__fetch_and()
 
     printf("    c89atomic_fetch_and_16:               ");
     {
-        c89atomic_uint16 a = 0;
+        c89atomic_uint16 a = OLD_VAL;
         c89atomic_uint16 b = a;
         c89atomic_uint16 c = 1234;
         c89atomic_uint16 r = c89atomic_fetch_and_16(&a, c);
@@ -698,7 +700,7 @@ void c89atomic_test__basic__fetch_and()
 
     printf("    c89atomic_fetch_and_32:               ");
     {
-        c89atomic_uint32 a = 0;
+        c89atomic_uint32 a = OLD_VAL;
         c89atomic_uint32 b = a;
         c89atomic_uint32 c = 123456;
         c89atomic_uint32 r = c89atomic_fetch_and_32(&a, c);
@@ -712,7 +714,7 @@ void c89atomic_test__basic__fetch_and()
 
     printf("    c89atomic_fetch_and_64:               ");
     {
-        c89atomic_uint64 a = 0;
+        c89atomic_uint64 a = OLD_VAL;
         c89atomic_uint64 b = a;
         c89atomic_uint64 c = 123456789012;
         c89atomic_uint64 r = c89atomic_fetch_and_64(&a, c);
@@ -754,6 +756,8 @@ int main(int argc, char** argv)
 
     (void)argc;
     (void)argv;
+
+    getchar();
 
     return 0;
 }
