@@ -333,11 +333,13 @@ typedef unsigned char           c89atomic_flag;
     #else
         #define C89ATOMIC_INLINE inline __attribute__((always_inline))
     #endif
+#elif defined(__WATCOMC__)
+    #define C89ATOMIC_INLINE _inline
 #else
     #define C89ATOMIC_INLINE
 #endif
 
-#if defined(_MSC_VER) /*&& !defined(__clang__)*/
+#if defined(_MSC_VER) || defined(__WATCOMC__) /*&& !defined(__clang__)*/
     /* Visual C++. */
     #define c89atomic_memory_order_relaxed  0
     #define c89atomic_memory_order_consume  1
@@ -382,8 +384,8 @@ typedef unsigned char           c89atomic_flag;
         }
     #endif  /* C89ATOMIC_X64 */
     #else
-        /* Old Visual C++. */
-        #if defined(__i386) || defined(_M_IX86)
+        /* Old Visual C++ and OpenWatcom. */
+        #if defined(C89ATOMIC_X86)
             /* x86. Implemented via inlined assembly. */
 
             /* thread_fence() */
