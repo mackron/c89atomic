@@ -334,7 +334,7 @@ typedef unsigned char           c89atomic_flag;
         #define C89ATOMIC_INLINE inline __attribute__((always_inline))
     #endif
 #elif defined(__WATCOMC__)
-    #define C89ATOMIC_INLINE _inline
+    #define C89ATOMIC_INLINE __inline
 #else
     #define C89ATOMIC_INLINE
 #endif
