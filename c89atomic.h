@@ -384,12 +384,12 @@ typedef unsigned char           c89atomic_flag;
         }
     #endif  /* C89ATOMIC_X64 */
     #else
-        /* Old Visual C++ and OpenWatcom. */
+        /* Old Visual C++, Digital Mars and OpenWatcom. */
         #if defined(C89ATOMIC_X86)
             /*
             x86. Implemented via inlined assembly.
 
-            This supports both MSVC and OpenWatcom. OpenWatcom is a little bit too pedantic with it's warnings. A few notes:
+            This supports both MSVC, Digital Mars and OpenWatcom. OpenWatcom is a little bit too pedantic with it's warnings. A few notes:
               - The return value of these functions are defined by the AL/AX/EAX/EAX:EDX registers which means an explicit return statement
                 is not actually necessary. This is helpful for performance reasons because it means we can avoid the cost of a declaring a
                 local variable and moving the value in EAX into that variable, only to then return it. However, unfortunately OpenWatcom
@@ -402,11 +402,9 @@ typedef unsigned char           c89atomic_flag;
             /* thread_fence() */
             static C89ATOMIC_INLINE void __stdcall c89atomic_thread_fence(int order)
             {
-                volatile c89atomic_uint32 barrier = 0;  /* Redundant assignment to 0 to silence a warning on OpenWatcom. */
-
                 (void)order;
                 __asm {
-                    xchg barrier, eax
+                    lock add [esp], 0
                 }
             }
 
