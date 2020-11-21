@@ -1,11 +1,13 @@
 /*
 Tests basic logic of all atomic functions. Does not test atomicity.
 */
-#include "../c89atomic.h"
 #include <stdio.h>
+#include "../c89atomic.h"
+
 
 /* Need to use a non-0 value for the old value to test byte ordering stuff properly. */
 #define OLD_VAL 42
+
 
 void c89atomic_test__basic__flag_test_and_set()
 {
@@ -156,6 +158,7 @@ void c89atomic_test__basic__store()
 
     printf("\n");
 }
+
 
 void c89atomic_test__basic__exchange()
 {
@@ -756,8 +759,6 @@ int main(int argc, char** argv)
 
     (void)argc;
     (void)argv;
-
-    getchar();
 
     return 0;
 }
