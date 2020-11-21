@@ -339,7 +339,7 @@ typedef unsigned char           c89atomic_flag;
     #define C89ATOMIC_INLINE
 #endif
 
-#if defined(_MSC_VER) || defined(__WATCOMC__) /*&& !defined(__clang__)*/
+#if defined(_MSC_VER) || defined(__WATCOMC__) || defined(__DMC__) /*&& !defined(__clang__)*/
     /* Visual C++. */
     #define c89atomic_memory_order_relaxed  0
     #define c89atomic_memory_order_consume  1
