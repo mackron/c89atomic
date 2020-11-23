@@ -757,6 +757,21 @@ int main(int argc, char** argv)
     c89atomic_thread_fence(c89atomic_memory_order_seq_cst);
     c89atomic_signal_fence(c89atomic_memory_order_seq_cst);
 
+
+    /* Testing cases where the return value is not used. */
+    {
+        void* dst = NULL;
+        void* src = NULL;
+        c89atomic_exchange_ptr(&dst, src);
+        c89atomic_compare_exchange_strong_ptr(&dst, &dst, src);
+    }
+
+    {
+        c89atomic_uint64 dst = 0;
+        c89atomic_uint64 src = 1;
+        c89atomic_exchange_64(&dst, src);
+    }
+
     (void)argc;
     (void)argv;
 
