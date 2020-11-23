@@ -318,7 +318,7 @@ typedef unsigned char           c89atomic_flag;
 #define C89ATOMIC_ARM
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
     #define C89ATOMIC_INLINE __forceinline
 #elif defined(__GNUC__)
     /*
@@ -333,7 +333,7 @@ typedef unsigned char           c89atomic_flag;
     #else
         #define C89ATOMIC_INLINE inline __attribute__((always_inline))
     #endif
-#elif defined(__WATCOMC__)
+#elif defined(__WATCOMC__) || defined(__DMC__)
     #define C89ATOMIC_INLINE __inline
 #else
     #define C89ATOMIC_INLINE
