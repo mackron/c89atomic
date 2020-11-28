@@ -772,6 +772,13 @@ int main(int argc, char** argv)
         c89atomic_exchange_64(&dst, src);
     }
 
+    /* Testing that some basic integer versions are working without compilation errors. */
+    {
+        int dst = 0;
+        int src = 1;
+        c89atomic_exchange_i32(&dst, src);
+    }
+
     (void)argc;
     (void)argv;
 
