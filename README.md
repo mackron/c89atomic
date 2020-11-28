@@ -1,5 +1,10 @@
-C89 Compatible Atomics
-======================
+<h4 align="center">C89 compatible atomics.</h4>
+
+<p align="center">
+    <a href="https://discord.gg/9vpqbjU"><img src="https://img.shields.io/discord/712952679415939085?label=discord&logo=discord" alt="discord"></a>
+    <a href="https://twitter.com/mackron"><img src="https://img.shields.io/twitter/follow/mackron?style=flat&label=twitter&color=1da1f2&logo=twitter" alt="twitter"></a>
+</p>
+
 This library aims to implement an equivalent to the C11 atomics library. It's intended to be used as a way to
 enable the use of atomics in a mostly consistent manner to modern C, while still enabling compatibility with
 older compilers. This is *not* a drop-in replacement for C11 atomics, but is very similar. Only limited testing
