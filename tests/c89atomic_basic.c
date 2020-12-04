@@ -779,6 +779,31 @@ int main(int argc, char** argv)
         c89atomic_exchange_i32(&dst, src);
     }
 
+    /* Basic floating point tests. */
+    {
+        int a;
+        float dst = 1.0f;
+        float src = 2.0f;
+        float res = c89atomic_exchange_f32(&dst, src);
+        (void)res;
+
+        res = c89atomic_load_f32(&dst);
+
+        a = 5; (void)a;
+    }
+
+    {
+        int a;
+        double dst = 1.0f;
+        double src = 2.0f;
+        double res = c89atomic_exchange_f64(&dst, src);
+        (void)res;
+
+        res = c89atomic_load_f64(&dst);
+
+        a = 5; (void)a;
+    }
+
     (void)argc;
     (void)argv;
 
