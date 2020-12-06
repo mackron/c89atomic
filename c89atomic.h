@@ -2188,6 +2188,30 @@ static C89ATOMIC_INLINE double c89atomic_exchange_explicit_f64(volatile double* 
 #define c89atomic_exchange_f64(dst, src)                                c89atomic_exchange_explicit_f64(dst, src, c89atomic_memory_order_seq_cst)
 
 
+
+/* Spinlock */
+typedef c89atomic_flag c89atomic_spinlock;
+
+static C89ATOMIC_INLINE void c89atomic_spinlock_lock(volatile c89atomic_spinlock* pSpinlock)
+{
+    for (;;) {
+        if (c89atomic_flag_test_and_set_explicit(pSpinlock, c89atomic_memory_order_acquire) == 0) {
+            break;
+        }
+
+        while (c89atomic_load_explicit_8(pSpinlock, c89atomic_memory_order_relaxed) == 1) {
+            /* Do nothing. */
+        }
+    }
+}
+
+static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlock* pSpinlock)
+{
+    c89atomic_flag_clear_explicit(pSpinlock, c89atomic_memory_order_release);
+}
+
+
+
 #if defined(__cplusplus)
 }
 #endif
