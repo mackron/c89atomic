@@ -36,8 +36,8 @@ deal with.
 
 Differences With C11
 --------------------
-For practicality, this is not a drop-in replacement for C11's `stdthread.h`. Below are the main differences
-between c89thread and stdthread.
+For practicality, this is not a drop-in replacement for C11's `stdatomic.h`. Below are the main differences
+between c89atomic and stdatomic.
 
   * All operations require an explicit size which is specified by the name of the function, and only 8-,
     16-, 32- and 64-bit operations are supported. Objects of an arbitrary sizes are not supported.
