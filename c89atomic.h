@@ -565,7 +565,7 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_64) && !defined(C89ATOMIC_64BIT)   /* atomic_exchange_explicit_64() must be implemented in terms of atomic_compare_and_swap() on 32-bit builds, no matter the version of Visual Studio. */
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_exchange_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
+            c89atomic_uint64 oldValue;
         
             do {
                 oldValue = *dst;
@@ -662,8 +662,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_64) && !defined(C89ATOMIC_64BIT)   /* 9atomic_fetch_add_explicit_64() must be implemented in terms of atomic_compare_and_swap() on 32-bit builds, no matter the version of Visual Studio. */
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_add_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
@@ -759,8 +759,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_8)
         static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_sub_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 oldValue;
-            volatile c89atomic_uint8 newValue;
+            c89atomic_uint8 oldValue;
+            c89atomic_uint8 newValue;
 
             do {
                 oldValue = *dst;
@@ -774,8 +774,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_16)
         static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_sub_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
-            volatile c89atomic_uint16 newValue;
+            c89atomic_uint16 oldValue;
+            c89atomic_uint16 newValue;
 
             do {
                 oldValue = *dst;
@@ -789,8 +789,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_32)
         static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_sub_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
-            volatile c89atomic_uint32 newValue;
+            c89atomic_uint32 oldValue;
+            c89atomic_uint32 newValue;
 
             do {
                 oldValue = *dst;
@@ -804,8 +804,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_64)
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_sub_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
@@ -822,8 +822,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_8)
         static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_and_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 oldValue;
-            volatile c89atomic_uint8 newValue;
+            c89atomic_uint8 oldValue;
+            c89atomic_uint8 newValue;
 
             do {
                 oldValue = *dst;
@@ -837,8 +837,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_16)
         static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_and_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
-            volatile c89atomic_uint16 newValue;
+            c89atomic_uint16 oldValue;
+            c89atomic_uint16 newValue;
 
             do {
                 oldValue = *dst;
@@ -852,8 +852,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_32)
         static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_and_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
-            volatile c89atomic_uint32 newValue;
+            c89atomic_uint32 oldValue;
+            c89atomic_uint32 newValue;
 
             do {
                 oldValue = *dst;
@@ -867,8 +867,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_64)
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_and_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
@@ -885,8 +885,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_8)
         static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_xor_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 oldValue;
-            volatile c89atomic_uint8 newValue;
+            c89atomic_uint8 oldValue;
+            c89atomic_uint8 newValue;
 
             do {
                 oldValue = *dst;
@@ -900,8 +900,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_16)
         static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_xor_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
-            volatile c89atomic_uint16 newValue;
+            c89atomic_uint16 oldValue;
+            c89atomic_uint16 newValue;
 
             do {
                 oldValue = *dst;
@@ -915,8 +915,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_32)
         static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_xor_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
-            volatile c89atomic_uint32 newValue;
+            c89atomic_uint32 oldValue;
+            c89atomic_uint32 newValue;
 
             do {
                 oldValue = *dst;
@@ -930,8 +930,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_64)
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_xor_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
@@ -948,8 +948,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_8)
         static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_or_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 oldValue;
-            volatile c89atomic_uint8 newValue;
+            c89atomic_uint8 oldValue;
+            c89atomic_uint8 newValue;
 
             do {
                 oldValue = *dst;
@@ -963,8 +963,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_16)
         static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_or_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
-            volatile c89atomic_uint16 newValue;
+            c89atomic_uint16 oldValue;
+            c89atomic_uint16 newValue;
 
             do {
                 oldValue = *dst;
@@ -978,8 +978,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_32)
         static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_or_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
-            volatile c89atomic_uint32 newValue;
+            c89atomic_uint32 oldValue;
+            c89atomic_uint32 newValue;
 
             do {
                 oldValue = *dst;
@@ -993,8 +993,8 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_64)
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_or_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
@@ -1163,7 +1163,7 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_exchange_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
+            c89atomic_uint16 oldValue;
         
             do {
                 oldValue = *dst;
@@ -1175,7 +1175,7 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_exchange_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
+            c89atomic_uint32 oldValue;
         
             do {
                 oldValue = *dst;
@@ -1187,7 +1187,7 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_exchange_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
+            c89atomic_uint64 oldValue;
         
             do {
                 oldValue = *dst;
@@ -1359,7 +1359,7 @@ typedef unsigned char           c89atomic_bool;
         /* compare_and_swap() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 desired)
         {
-            volatile c89atomic_uint8 result;
+            c89atomic_uint8 result;
 
         #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
             __asm__ __volatile__("lock; cmpxchg %3, %0" : "+m"(*dst), "=a"(result) : "a"(expected), "d"(desired) : "cc");
@@ -1372,7 +1372,7 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 desired)
         {
-            volatile c89atomic_uint16 result;
+            c89atomic_uint16 result;
 
         #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
             __asm__ __volatile__("lock; cmpxchg %3, %0" : "+m"(*dst), "=a"(result) : "a"(expected), "d"(desired) : "cc");
@@ -1385,7 +1385,7 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 desired)
         {
-            volatile c89atomic_uint32 result;
+            c89atomic_uint32 result;
 
         #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
             __asm__ __volatile__("lock; cmpxchg %3, %0" : "+m"(*dst), "=a"(result) : "a"(expected), "d"(desired) : "cc");
@@ -1407,8 +1407,8 @@ typedef unsigned char           c89atomic_bool;
             register never be modified. The problem is that CMPXCHG8B requires us to write our desired value to it. I'm resolving this
             by just pushing and popping the EBX register manually.
             */
-            volatile c89atomic_uint32 resultEAX;
-            volatile c89atomic_uint32 resultEDX;
+            c89atomic_uint32 resultEAX;
+            c89atomic_uint32 resultEDX;
             __asm__ __volatile__("push %%ebx; xchg %5, %%ebx; lock; cmpxchg8b %0; pop %%ebx" : "+m"(*dst), "=a"(resultEAX), "=d"(resultEDX) : "a"(expected & 0xFFFFFFFF), "d"(expected >> 32), "r"(desired & 0xFFFFFFFF), "c"(desired >> 32) : "cc");
             result = ((c89atomic_uint64)resultEDX << 32) | resultEAX;
         #elif defined(C89ATOMIC_X64)
@@ -1424,7 +1424,7 @@ typedef unsigned char           c89atomic_bool;
         /* exchange() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_exchange_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 result = 0;
+            c89atomic_uint8 result = 0;
                 
             (void)order;
 
@@ -1439,7 +1439,7 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_exchange_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 result = 0;
+            c89atomic_uint16 result = 0;
                 
             (void)order;
             
@@ -1454,7 +1454,7 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_exchange_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 result;
+            c89atomic_uint32 result;
                 
             (void)order;
 
@@ -1469,7 +1469,7 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_exchange_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 result;
+            c89atomic_uint64 result;
                 
             (void)order;
 
@@ -1536,8 +1536,8 @@ typedef unsigned char           c89atomic_bool;
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_add_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
         #if defined(C89ATOMIC_X86)
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             (void)order;
 
@@ -1548,7 +1548,7 @@ typedef unsigned char           c89atomic_bool;
 
             return oldValue;
         #elif defined(C89ATOMIC_X64)
-            volatile c89atomic_uint64 result;
+            c89atomic_uint64 result;
 
             (void)order;
 
@@ -1561,8 +1561,8 @@ typedef unsigned char           c89atomic_bool;
         /* fetch_sub() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_sub_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 oldValue;
-            volatile c89atomic_uint8 newValue;
+            c89atomic_uint8 oldValue;
+            c89atomic_uint8 newValue;
 
             do {
                 oldValue = *dst;
@@ -1575,8 +1575,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_sub_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
-            volatile c89atomic_uint16 newValue;
+            c89atomic_uint16 oldValue;
+            c89atomic_uint16 newValue;
 
             do {
                 oldValue = *dst;
@@ -1589,8 +1589,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_sub_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
-            volatile c89atomic_uint32 newValue;
+            c89atomic_uint32 oldValue;
+            c89atomic_uint32 newValue;
 
             do {
                 oldValue = *dst;
@@ -1603,8 +1603,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_sub_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
@@ -1619,8 +1619,8 @@ typedef unsigned char           c89atomic_bool;
         /* fetch_and() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_and_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 oldValue;
-            volatile c89atomic_uint8 newValue;
+            c89atomic_uint8 oldValue;
+            c89atomic_uint8 newValue;
 
             do {
                 oldValue = *dst;
@@ -1633,8 +1633,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_and_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
-            volatile c89atomic_uint16 newValue;
+            c89atomic_uint16 oldValue;
+            c89atomic_uint16 newValue;
 
             do {
                 oldValue = *dst;
@@ -1647,8 +1647,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_and_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
-            volatile c89atomic_uint32 newValue;
+            c89atomic_uint32 oldValue;
+            c89atomic_uint32 newValue;
 
             do {
                 oldValue = *dst;
@@ -1661,8 +1661,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_and_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
@@ -1677,8 +1677,8 @@ typedef unsigned char           c89atomic_bool;
         /* fetch_xor() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_xor_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 oldValue;
-            volatile c89atomic_uint8 newValue;
+            c89atomic_uint8 oldValue;
+            c89atomic_uint8 newValue;
 
             do {
                 oldValue = *dst;
@@ -1691,8 +1691,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_xor_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
-            volatile c89atomic_uint16 newValue;
+            c89atomic_uint16 oldValue;
+            c89atomic_uint16 newValue;
 
             do {
                 oldValue = *dst;
@@ -1705,8 +1705,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_xor_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
-            volatile c89atomic_uint32 newValue;
+            c89atomic_uint32 oldValue;
+            c89atomic_uint32 newValue;
 
             do {
                 oldValue = *dst;
@@ -1719,8 +1719,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_xor_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
@@ -1735,8 +1735,8 @@ typedef unsigned char           c89atomic_bool;
         /* fetch_or() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_or_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint8 oldValue;
-            volatile c89atomic_uint8 newValue;
+            c89atomic_uint8 oldValue;
+            c89atomic_uint8 newValue;
 
             do {
                 oldValue = *dst;
@@ -1749,8 +1749,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_or_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint16 oldValue;
-            volatile c89atomic_uint16 newValue;
+            c89atomic_uint16 oldValue;
+            c89atomic_uint16 newValue;
 
             do {
                 oldValue = *dst;
@@ -1763,8 +1763,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_or_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint32 oldValue;
-            volatile c89atomic_uint32 newValue;
+            c89atomic_uint32 oldValue;
+            c89atomic_uint32 newValue;
 
             do {
                 oldValue = *dst;
@@ -1777,8 +1777,8 @@ typedef unsigned char           c89atomic_bool;
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_or_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            volatile c89atomic_uint64 oldValue;
-            volatile c89atomic_uint64 newValue;
+            c89atomic_uint64 oldValue;
+            c89atomic_uint64 newValue;
 
             do {
                 oldValue = *dst;
