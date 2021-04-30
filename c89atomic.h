@@ -2261,7 +2261,7 @@ static C89ATOMIC_INLINE void c89atomic_store_explicit_f32(volatile float* dst, f
     c89atomic_store_explicit_32((volatile c89atomic_uint32*)dst, x.i, order);
 }
 
-static C89ATOMIC_INLINE void c89atomic_store_explicit_f64(volatile float* dst, float src, c89atomic_memory_order order)
+static C89ATOMIC_INLINE void c89atomic_store_explicit_f64(volatile double* dst, double src, c89atomic_memory_order order)
 {
     c89atomic_if64 x;
     x.f = src;
