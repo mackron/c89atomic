@@ -381,7 +381,7 @@ typedef unsigned char           c89atomic_bool;
         OpenWatcom will throw a warning about the variable being used without being assigned. To work
         around this we just initialize our local variables to 0.
     */
-    #if _MSC_VER < 1600 && defined(C89ATOMIC_32BIT)     /* 1600 = Visual Studio 2010 */
+    #if _MSC_VER < 1600 && defined(C89ATOMIC_X86)   /* 1600 = Visual Studio 2010 */
         #define C89ATOMIC_MSVC_USE_INLINED_ASSEMBLY
     #endif
     #if _MSC_VER < 1600
