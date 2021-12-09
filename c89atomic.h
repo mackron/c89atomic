@@ -313,7 +313,7 @@ typedef unsigned char           c89atomic_bool;
 #define C89ATOMIC_X64
 #elif defined(__i386) || defined(_M_IX86)
 #define C89ATOMIC_X86
-#elif defined(__arm__) || defined(_M_ARM)
+#elif defined(__arm__) || defined(_M_ARM) || defined(__arm64) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
 #define C89ATOMIC_ARM
 #endif
 
