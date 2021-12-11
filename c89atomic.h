@@ -1985,12 +1985,12 @@ functions are just implemented as inlined functions.
         return (void*)c89atomic_exchange_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64)src, order);
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_ptr(volatile void** dst, volatile void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_ptr(volatile void** dst, void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
         return c89atomic_compare_exchange_strong_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)desired, successOrder, failureOrder);
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_ptr(volatile void** dst, volatile void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_ptr(volatile void** dst, void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
         return c89atomic_compare_exchange_weak_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)desired, successOrder, failureOrder);
     }
@@ -2025,7 +2025,7 @@ functions are just implemented as inlined functions.
         return c89atomic_compare_exchange_strong_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)desired, successOrder, failureOrder);
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_ptr(volatile void** dst, volatile void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_ptr(volatile void** dst, void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
         return c89atomic_compare_exchange_weak_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)desired, successOrder, failureOrder);
     }
