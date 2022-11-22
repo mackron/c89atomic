@@ -309,11 +309,18 @@ typedef unsigned char           c89atomic_bool;
 #endif
 #endif
 
+#if defined(__arm__) || defined(_M_ARM)
+#define C89ATOMIC_ARM32
+#endif
+#if defined(__arm64) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
+#define C89ATOMIC_ARM64
+#endif
+
 #if defined(__x86_64__) || defined(_M_X64)
 #define C89ATOMIC_X64
 #elif defined(__i386) || defined(_M_IX86)
 #define C89ATOMIC_X86
-#elif defined(__arm__) || defined(_M_ARM) || defined(__arm64) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
+#elif defined(C89ATOMIC_ARM32) || defined(C89ATOMIC_ARM64)
 #define C89ATOMIC_ARM
 #endif
 
@@ -347,6 +354,58 @@ typedef unsigned char           c89atomic_bool;
 
 #if (defined(_MSC_VER) /*&& !defined(__clang__)*/) || defined(__WATCOMC__) || defined(__DMC__)
     /* Visual C++. */
+    #define C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, intrin, c89atomicType, msvcType)   \
+        c89atomicType result; \
+        switch (order) \
+        { \
+            case c89atomic_memory_order_relaxed: \
+            { \
+                result = (c89atomicType)intrin##_nf((volatile msvcType*)dst, (msvcType)src); \
+            } break; \
+            case c89atomic_memory_order_consume: \
+            case c89atomic_memory_order_acquire: \
+            { \
+                result = (c89atomicType)intrin##_acq((volatile msvcType*)dst, (msvcType)src); \
+            } break; \
+            case c89atomic_memory_order_release: \
+            { \
+                result = (c89atomicType)intrin##_rel((volatile msvcType*)dst, (msvcType)src); \
+            } break; \
+            case c89atomic_memory_order_acq_rel: \
+            case c89atomic_memory_order_seq_cst: \
+            default: \
+            { \
+                result = (c89atomicType)intrin((volatile msvcType*)dst, (msvcType)src); \
+            } break; \
+        } \
+        return result; \
+
+    #define C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, expected, desired, order, intrin, c89atomicType, msvcType)   \
+        c89atomicType result; \
+        switch (order) \
+        { \
+            case c89atomic_memory_order_relaxed: \
+            { \
+                result = (c89atomicType)intrin##_nf((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
+            } break; \
+            case c89atomic_memory_order_consume: \
+            case c89atomic_memory_order_acquire: \
+            { \
+                result = (c89atomicType)intrin##_acq((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
+            } break; \
+            case c89atomic_memory_order_release: \
+            { \
+                result = (c89atomicType)intrin##_rel((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
+            } break; \
+            case c89atomic_memory_order_acq_rel: \
+            case c89atomic_memory_order_seq_cst: \
+            default: \
+            { \
+                result = (c89atomicType)intrin((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
+            } break; \
+        } \
+        return result; \
+
     #define c89atomic_memory_order_relaxed  0
     #define c89atomic_memory_order_consume  1
     #define c89atomic_memory_order_acquire  2
@@ -534,29 +593,45 @@ typedef unsigned char           c89atomic_bool;
         #if defined(C89ATOMIC_HAS_8)
             static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_exchange_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
             {
+            #if defined(C89ATOMIC_ARM)
+                C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedExchange8, c89atomic_uint8, char);
+            #else
                 (void)order;    /* Always using the strongest memory order. */
                 return (c89atomic_uint8)_InterlockedExchange8((volatile char*)dst, (char)src);
+            #endif
             }
         #endif
         #if defined(C89ATOMIC_HAS_16)
             static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_exchange_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
             {
+            #if defined(C89ATOMIC_ARM)
+                C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedExchange16, c89atomic_uint16, short);
+            #else
                 (void)order;    /* Always using the strongest memory order. */
                 return (c89atomic_uint16)_InterlockedExchange16((volatile short*)dst, (short)src);
+            #endif
             }
         #endif
         #if defined(C89ATOMIC_HAS_32)
             static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_exchange_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
             {
+            #if defined(C89ATOMIC_ARM)
+                C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedExchange, c89atomic_uint32, long);
+            #else
                 (void)order;    /* Always using the strongest memory order. */
                 return (c89atomic_uint32)_InterlockedExchange((volatile long*)dst, (long)src);
+            #endif
             }
         #endif
         #if defined(C89ATOMIC_HAS_64) && defined(C89ATOMIC_64BIT)
             static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_exchange_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
             {
+            #if defined(C89ATOMIC_ARM)
+                C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedExchange64, c89atomic_uint64, long long);
+            #else
                 (void)order;    /* Always using the strongest memory order. */
                 return (c89atomic_uint64)_InterlockedExchange64((volatile long long*)dst, (long long)src);
+            #endif
             }
         #else
             /* Implemented below. */
@@ -631,29 +706,45 @@ typedef unsigned char           c89atomic_bool;
         #if defined(C89ATOMIC_HAS_8)
             static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_add_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
             {
+            #if defined(C89ATOMIC_ARM)
+                C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedExchangeAdd8, c89atomic_uint8, char);
+            #else
                 (void)order;    /* Always using the strongest memory order. */
                 return (c89atomic_uint8)_InterlockedExchangeAdd8((volatile char*)dst, (char)src);
+            #endif
             }
         #endif
         #if defined(C89ATOMIC_HAS_16)
             static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_add_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
             {
+            #if defined(C89ATOMIC_ARM)
+                C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedExchangeAdd16, c89atomic_uint16, short);
+            #else
                 (void)order;    /* Always using the strongest memory order. */
                 return (c89atomic_uint16)_InterlockedExchangeAdd16((volatile short*)dst, (short)src);
+            #endif
             }
         #endif
         #if defined(C89ATOMIC_HAS_32)
             static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_add_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
             {
+            #if defined(C89ATOMIC_ARM)
+                C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedExchangeAdd, c89atomic_uint32, long);
+            #else
                 (void)order;    /* Always using the strongest memory order. */
                 return (c89atomic_uint32)_InterlockedExchangeAdd((volatile long*)dst, (long)src);
+            #endif
             }
         #endif
         #if defined(C89ATOMIC_HAS_64) && defined(C89ATOMIC_64BIT)
             static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_add_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
             {
+            #if defined(C89ATOMIC_ARM)
+                C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedExchangeAdd64, c89atomic_uint64, long long);
+            #else
                 (void)order;    /* Always using the strongest memory order. */
                 return (c89atomic_uint64)_InterlockedExchangeAdd64((volatile long long*)dst, (long long)src);
+            #endif
             }
         #else
             /* Implemented below. */
@@ -686,9 +777,11 @@ typedef unsigned char           c89atomic_bool;
             }
         }
     #else
-        /* Can't use MemoryBarrier() for this as it require Windows headers which we want to avoid in the header. */
+        /* Can't use MemoryBarrier() for this as it require Windows headers which we want to avoid in the header section of c89atomic. */
         #if defined(C89ATOMIC_X64)
             #define c89atomic_thread_fence(order)   __faststorefence(), (void)order
+        #elif defined(C89ATOMIC_ARM64)
+            #define c89atomic_thread_fence(order)   __dmb(_ARM64_BARRIER_ISH), (void)order
         #else
             static C89ATOMIC_INLINE void c89atomic_thread_fence(c89atomic_memory_order order)
             {
@@ -713,29 +806,45 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_8)
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_load_explicit_8(volatile const c89atomic_uint8* ptr, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, 0, 0, order, _InterlockedCompareExchange8, c89atomic_uint8, char);
+        #else
             (void)order;    /* Always using the strongest memory order. */
             return c89atomic_compare_and_swap_8((volatile c89atomic_uint8*)ptr, 0, 0);
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_16)
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_load_explicit_16(volatile const c89atomic_uint16* ptr, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, 0, 0, order, _InterlockedCompareExchange16, c89atomic_uint16, short);
+        #else
             (void)order;    /* Always using the strongest memory order. */
             return c89atomic_compare_and_swap_16((volatile c89atomic_uint16*)ptr, 0, 0);
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_32)
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_load_explicit_32(volatile const c89atomic_uint32* ptr, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, 0, 0, order, _InterlockedCompareExchange, c89atomic_uint32, long);
+        #else
             (void)order;    /* Always using the strongest memory order. */
             return c89atomic_compare_and_swap_32((volatile c89atomic_uint32*)ptr, 0, 0);
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_64)
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_load_explicit_64(volatile const c89atomic_uint64* ptr, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, 0, 0, order, _InterlockedCompareExchange64, c89atomic_uint64, long long);
+        #else
             (void)order;    /* Always using the strongest memory order. */
             return c89atomic_compare_and_swap_64((volatile c89atomic_uint64*)ptr, 0, 0);
+        #endif
         }
     #endif
 
@@ -822,6 +931,9 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_8)
         static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_and_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedAnd8, c89atomic_uint8, char);
+        #else
             c89atomic_uint8 oldValue;
             c89atomic_uint8 newValue;
 
@@ -832,11 +944,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_16)
         static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_and_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedAnd16, c89atomic_uint16, short);
+        #else
             c89atomic_uint16 oldValue;
             c89atomic_uint16 newValue;
 
@@ -847,11 +963,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_32)
         static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_and_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedAnd, c89atomic_uint32, long);
+        #else
             c89atomic_uint32 oldValue;
             c89atomic_uint32 newValue;
 
@@ -862,11 +982,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_64)
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_and_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedAnd64, c89atomic_uint64, long long);
+        #else
             c89atomic_uint64 oldValue;
             c89atomic_uint64 newValue;
 
@@ -877,6 +1001,7 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
 
@@ -885,6 +1010,9 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_8)
         static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_xor_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedXor8, c89atomic_uint8, char);
+        #else
             c89atomic_uint8 oldValue;
             c89atomic_uint8 newValue;
 
@@ -895,11 +1023,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_16)
         static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_xor_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedXor16, c89atomic_uint16, short);
+        #else
             c89atomic_uint16 oldValue;
             c89atomic_uint16 newValue;
 
@@ -910,11 +1042,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_32)
         static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_xor_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedXor, c89atomic_uint32, long);
+        #else
             c89atomic_uint32 oldValue;
             c89atomic_uint32 newValue;
 
@@ -925,11 +1061,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_64)
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_xor_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedXor64, c89atomic_uint64, long long);
+        #else
             c89atomic_uint64 oldValue;
             c89atomic_uint64 newValue;
 
@@ -940,6 +1080,7 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
 
@@ -948,6 +1089,9 @@ typedef unsigned char           c89atomic_bool;
     #if defined(C89ATOMIC_HAS_8)
         static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_or_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedOr8, c89atomic_uint8, char);
+        #else
             c89atomic_uint8 oldValue;
             c89atomic_uint8 newValue;
 
@@ -958,11 +1102,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_16)
         static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_or_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedOr16, c89atomic_uint16, short);
+        #else
             c89atomic_uint16 oldValue;
             c89atomic_uint16 newValue;
 
@@ -973,11 +1121,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_32)
         static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_or_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedOr, c89atomic_uint32, long);
+        #else
             c89atomic_uint32 oldValue;
             c89atomic_uint32 newValue;
 
@@ -988,11 +1140,15 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
     #if defined(C89ATOMIC_HAS_64)
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_or_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
+        #if defined(C89ATOMIC_ARM)
+            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, _InterlockedOr64, c89atomic_uint64, long long);
+        #else
             c89atomic_uint64 oldValue;
             c89atomic_uint64 newValue;
 
@@ -1003,6 +1159,7 @@ typedef unsigned char           c89atomic_bool;
 
             (void)order;
             return oldValue;
+        #endif
         }
     #endif
 
