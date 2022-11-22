@@ -378,7 +378,7 @@ typedef unsigned char           c89atomic_bool;
                 result = (c89atomicType)intrin((volatile msvcType*)dst, (msvcType)src); \
             } break; \
         } \
-        return result; \
+        return result;
 
     #define C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, expected, desired, order, intrin, c89atomicType, msvcType)   \
         c89atomicType result; \
@@ -404,7 +404,7 @@ typedef unsigned char           c89atomic_bool;
                 result = (c89atomicType)intrin((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
             } break; \
         } \
-        return result; \
+        return result;
 
     #define c89atomic_memory_order_relaxed  0
     #define c89atomic_memory_order_consume  1
