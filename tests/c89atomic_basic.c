@@ -733,6 +733,103 @@ void c89atomic_test__basic__fetch_and()
 }
 
 
+/* compare_and_swap() */
+void c89atomic_test__basic__compare_and_swap()
+{
+    printf("c89atomic_compare_and_swap_*():\n");
+
+    printf("    c89atomic_compare_and_swap_8:         ");
+    {
+        c89atomic_uint8 a = OLD_VAL;
+        c89atomic_uint8 b = a;
+        c89atomic_uint8 c = 123;
+        c89atomic_uint8 r = c89atomic_compare_and_swap_8(&a, b, c);
+
+        if (a == c && r == b) {
+            /* Negative case. Expecting a to remain unchanged and the result to not be equal to the expected value. */
+            a = OLD_VAL;
+            b = (c89atomic_uint8)(a + 1);
+            r = c89atomic_compare_and_swap_8(&a, b, c);
+            if (a == OLD_VAL && r != b) {
+                printf("PASSED\n");
+            } else {
+                printf("FAILED\n");
+            }
+        } else {
+            printf("FAILED\n");
+        }
+    }
+
+    printf("    c89atomic_compare_and_swap_16:        ");
+    {
+        c89atomic_uint16 a = OLD_VAL;
+        c89atomic_uint16 b = a;
+        c89atomic_uint16 c = 123;
+        c89atomic_uint16 r = c89atomic_compare_and_swap_16(&a, b, c);
+
+        if (a == c && r == b) {
+            /* Negative case. Expecting a to remain unchanged and the result to not be equal to the expected value. */
+            a = OLD_VAL;
+            b = (c89atomic_uint16)(a + 1);
+            r = c89atomic_compare_and_swap_16(&a, b, c);
+            if (a == OLD_VAL && r != b) {
+                printf("PASSED\n");
+            } else {
+                printf("FAILED\n");
+            }
+        } else {
+            printf("FAILED\n");
+        }
+    }
+
+    printf("    c89atomic_compare_and_swap_32:        ");
+    {
+        c89atomic_uint32 a = OLD_VAL;
+        c89atomic_uint32 b = a;
+        c89atomic_uint32 c = 123;
+        c89atomic_uint32 r = c89atomic_compare_and_swap_32(&a, b, c);
+
+        if (a == c && r == b) {
+            /* Negative case. Expecting a to remain unchanged and the result to not be equal to the expected value. */
+            a = OLD_VAL;
+            b = (c89atomic_uint32)(a + 1);
+            r = c89atomic_compare_and_swap_32(&a, b, c);
+            if (a == OLD_VAL && r != b) {
+                printf("PASSED\n");
+            } else {
+                printf("FAILED\n");
+            }
+        } else {
+            printf("FAILED\n");
+        }
+    }
+
+    printf("    c89atomic_compare_and_swap_64:        ");
+    {
+        c89atomic_uint64 a = OLD_VAL;
+        c89atomic_uint64 b = a;
+        c89atomic_uint64 c = 123;
+        c89atomic_uint64 r = c89atomic_compare_and_swap_64(&a, b, c);
+
+        if (a == c && r == b) {
+            /* Negative case. Expecting a to remain unchanged and the result to not be equal to the expected value. */
+            a = OLD_VAL;
+            b = (c89atomic_uint64)(a + 1);
+            r = c89atomic_compare_and_swap_64(&a, b, c);
+            if (a == OLD_VAL && r != b) {
+                printf("PASSED\n");
+            } else {
+                printf("FAILED\n");
+            }
+        } else {
+            printf("FAILED\n");
+        }
+    }
+
+    printf("\n");
+}
+
+
 int main(int argc, char** argv)
 {
     c89atomic_test__basic__flag_test_and_set();
@@ -747,6 +844,7 @@ int main(int argc, char** argv)
     c89atomic_test__basic__fetch_or();
     c89atomic_test__basic__fetch_xor();
     c89atomic_test__basic__fetch_and();
+    c89atomic_test__basic__compare_and_swap();
 
     /* Putting these functions here for testing that they compile. */
     (void)c89atomic_is_lock_free_8(NULL);
