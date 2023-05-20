@@ -260,6 +260,9 @@ extern "C" {
     #endif
 #endif
 
+typedef int c89atomic_memory_order;
+
+/* Sized Types */
 typedef   signed char           c89atomic_int8;
 typedef unsigned char           c89atomic_uint8;
 typedef   signed short          c89atomic_int16;
@@ -274,8 +277,9 @@ typedef unsigned int            c89atomic_uint32;
     typedef unsigned long long  c89atomic_uint64;
 #endif
 
-typedef int                     c89atomic_memory_order;
 typedef unsigned char           c89atomic_bool;
+/* End Sized Types */
+
 
 /* Architecture Detection */
 #if !defined(C89ATOMIC_64BIT) && !defined(C89ATOMIC_32BIT)
@@ -321,7 +325,9 @@ typedef unsigned char           c89atomic_bool;
 #elif defined(C89ATOMIC_ARM32) || defined(C89ATOMIC_ARM64)
 #define C89ATOMIC_ARM
 #endif
+/* End Architecture Detection */
 
+/* Inline */
 /* We want to encourage the compiler to inline. When adding support for a new compiler, make sure it's handled here. */
 #if defined(_MSC_VER)
     #define C89ATOMIC_INLINE __forceinline
@@ -343,6 +349,7 @@ typedef unsigned char           c89atomic_bool;
 #else
     #define C89ATOMIC_INLINE
 #endif
+/* End Inline */
 
 /* Assume everything supports all standard sized atomics by default. We'll #undef these when not supported. */
 #define C89ATOMIC_HAS_8
