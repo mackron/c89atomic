@@ -339,7 +339,7 @@ typedef unsigned char           c89atomic_bool;
     command line, we cannot use the "inline" keyword and instead need to use "__inline__". In an attempt to work around this issue
     I am using "__inline__" only when we're compiling in strict ANSI mode.
     */
-    #if defined(__STRICT_ANSI__)
+    #if defined(__STRICT_ANSI__) || !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
         #define C89ATOMIC_INLINE __inline__ __attribute__((always_inline))
     #else
         #define C89ATOMIC_INLINE inline __attribute__((always_inline))
