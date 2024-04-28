@@ -1201,12 +1201,12 @@ typedef unsigned char           c89atomic_bool;
         typedef c89atomic_uint8 c89atomic_flag;
         #define c89atomic_flag_test_and_set_explicit(ptr, order)    (c89atomic_bool)c89atomic_test_and_set_explicit_8(ptr, order)
         #define c89atomic_flag_clear_explicit(ptr, order)           c89atomic_clear_explicit_8(ptr, order)
-        #define c89atoimc_flag_load_explicit(ptr, order)            c89atomic_load_explicit_8(ptr, order)
+        #define c89atomic_flag_load_explicit(ptr, order)            c89atomic_load_explicit_8(ptr, order)
     #else
         typedef c89atomic_uint32 c89atomic_flag;
         #define c89atomic_flag_test_and_set_explicit(ptr, order)    (c89atomic_bool)c89atomic_test_and_set_explicit_32(ptr, order)
         #define c89atomic_flag_clear_explicit(ptr, order)           c89atomic_clear_explicit_32(ptr, order)
-        #define c89atoimc_flag_load_explicit(ptr, order)            c89atomic_load_explicit_32(ptr, order)
+        #define c89atomic_flag_load_explicit(ptr, order)            c89atomic_load_explicit_32(ptr, order)
     #endif
 #elif defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
     /* Modern GCC atomic built-ins. */
@@ -1308,16 +1308,32 @@ typedef unsigned char           c89atomic_bool;
         return expected;
     }
 
+    /*
+    The compare_and_swap function below will result in the following warning when compiling via Android Studio
+    which uses clang:
+
+        warning: misaligned atomic operation may incur significant performance penalty [-Watomic-alignment]
+
+    What I think is happening is that Clang is looking at this function in a bubble and not considering the
+    broader context in which the function is being used, which is surprising to me considering the function is
+    marked as force-inlined. So I think this warning is being reported incorrectly.
+
+    I've only seen this warning with compare_and_swap_64(). If this is happening with compare_and_swap_32/16/8(),
+    just move the pragmas up to encapsulate the affected functions.
+    */
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Watomic-alignment"
     static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 desired)
     {
         __atomic_compare_exchange_n(dst, &expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         return expected;
     }
+    #pragma clang diagnostic pop
 
     typedef c89atomic_uint8 c89atomic_flag;
     #define c89atomic_flag_test_and_set_explicit(dst, order)        (c89atomic_bool)__atomic_test_and_set(dst, order)
     #define c89atomic_flag_clear_explicit(dst, order)               __atomic_clear(dst, order)
-    #define c89atoimc_flag_load_explicit(ptr, order)                c89atomic_load_explicit_8(ptr, order)
+    #define c89atomic_flag_load_explicit(ptr, order)                c89atomic_load_explicit_8(ptr, order)
 #else
     /* GCC and compilers supporting GCC-style inlined assembly. */
     #define c89atomic_memory_order_relaxed  1
@@ -2017,7 +2033,7 @@ typedef unsigned char           c89atomic_bool;
     typedef c89atomic_uint8 c89atomic_flag;
     #define c89atomic_flag_test_and_set_explicit(ptr, order)        (c89atomic_bool)c89atomic_test_and_set_explicit_8(ptr, order)
     #define c89atomic_flag_clear_explicit(ptr, order)               c89atomic_clear_explicit_8(ptr, order)
-    #define c89atoimc_flag_load_explicit(ptr, order)                c89atomic_load_explicit_8(ptr, order)
+    #define c89atomic_flag_load_explicit(ptr, order)                c89atomic_load_explicit_8(ptr, order)
 #endif
 
 /* compare_exchange() */
@@ -2682,7 +2698,7 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_lock(volatile c89atomic_spinlock
             break;
         }
 
-        while (c89atoimc_flag_load_explicit(pSpinlock, c89atomic_memory_order_relaxed) == 1) {
+        while (c89atomic_flag_load_explicit(pSpinlock, c89atomic_memory_order_relaxed) == 1) {
             /* Do nothing. */
         }
     }
