@@ -1310,7 +1310,7 @@ typedef unsigned char           c89atomic_bool;
 
     /*
     The compare_and_swap function below will result in the following warning when compiling via Android Studio
-    which uses clang:
+    which uses Clang:
 
         warning: misaligned atomic operation may incur significant performance penalty [-Watomic-alignment]
 
