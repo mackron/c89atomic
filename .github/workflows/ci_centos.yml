@@ -2,7 +2,7 @@ name: CentOS Stream 9
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:

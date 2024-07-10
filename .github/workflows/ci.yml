@@ -1,7 +1,7 @@
 name: Windows & Ubuntu & Apple macOS
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:

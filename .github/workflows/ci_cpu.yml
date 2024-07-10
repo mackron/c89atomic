@@ -2,7 +2,7 @@ name: riscv64, s390x, armv7, aarch64, ppc64le
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
