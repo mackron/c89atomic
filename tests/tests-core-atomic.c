@@ -20,13 +20,14 @@ static void test_atomic_flag(void) {
 static void test_atomic_inc_positive(void) {
     atomic_size_t res;
     atomic_init(&res, 0);
+    int i;
 
     CHK_EXPECTED(0, atomic_fetch_add(&res, 1));
     CHK_EXPECTED(1, atomic_load(&res));
     CHK_EXPECTED(1, atomic_fetch_add(&res, 1));
     CHK_EXPECTED(2, atomic_load(&res));
     atomic_store(&res, 0);
-    for (int i = 0; i < 512; ++i) {
+    for (i = 0; i < 512; ++i) {
         CHK_EXPECTED(i, atomic_fetch_add(&res, 1));
         CHK_EXPECTED(i + 1, atomic_load(&res));
     }
@@ -35,8 +36,9 @@ static void test_atomic_inc_positive(void) {
 static void test_atomic_inc_negative(void) {
     atomic_size_t res;
     atomic_init(&res, -99);
+    int i;
 
-    for (int i = -99; i < 123; ++i) {
+    for (i = -99; i < 123; ++i) {
         CHK_EXPECTED(i, atomic_fetch_add(&res, 1));
         CHK_EXPECTED(i + 1, atomic_load(&res));
     }
@@ -45,8 +47,9 @@ static void test_atomic_inc_negative(void) {
 static void test_atomic_inc_rollover(void) {
     atomic_size_t res;
     atomic_init(&res, INT_MAX - 30);
+    int i;
 
-    for (int i = 0; i < 30; ++i) {
+    for (i = 0; i < 30; ++i) {
         CHK_EXPECTED(INT_MAX - 30 + i, atomic_fetch_add(&res, 1));
         CHK_EXPECTED(INT_MAX - 30 + i + 1, atomic_load(&res));
     }
@@ -62,13 +65,14 @@ static void test_atomic_inc_rollover(void) {
 static void test_atomic_dec_negative(void) {
     atomic_size_t res;
     atomic_init(&res, 0);
+    int i;
 
     CHK_EXPECTED(0, atomic_fetch_sub(&res, 1));
     CHK_EXPECTED(-1, atomic_load(&res));
     CHK_EXPECTED(-1, atomic_fetch_sub(&res, 1));
     CHK_EXPECTED(-2, atomic_load(&res));
     atomic_store(&res, 0);
-    for (int i = 0; i < 512; ++i) {
+    for (i = 0; i < 512; ++i) {
         CHK_EXPECTED(-i, atomic_fetch_sub(&res, 1));
         CHK_EXPECTED(-i - 1, atomic_load(&res));
     }
@@ -77,8 +81,9 @@ static void test_atomic_dec_negative(void) {
 static void test_atomic_dec_positive(void) {
     atomic_size_t res;
     atomic_init(&res, 99);
+    int i;
 
-    for (int i = 99; i > -123; --i) {
+    for (i = 99; i > -123; --i) {
         CHK_EXPECTED(i, atomic_fetch_sub(&res, 1));
         CHK_EXPECTED(i - 1, atomic_load(&res));
     }
@@ -87,8 +92,9 @@ static void test_atomic_dec_positive(void) {
 static void test_atomic_dec_rollover(void) {
     atomic_size_t res;
     atomic_init(&res, INT_MIN + 30);
+    int i;
 
-    for (int i = 0; i < 30; ++i) {
+    for (i = 0; i < 30; ++i) {
         CHK_EXPECTED(INT_MIN + 30 - i, atomic_fetch_sub(&res, 1));
         CHK_EXPECTED(INT_MIN + 30 - i - 1, atomic_load(&res));
     }
