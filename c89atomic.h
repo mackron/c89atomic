@@ -2728,6 +2728,13 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlo
     c89atomic_flag_clear_explicit(pSpinlock, c89atomic_memory_order_release);
 }
 
+
+#if defined(__GNUC__)
+#   define atomic_typeof(T,V)   __typeof__(V)
+#else
+#   define atomic_typeof(T,V)   T
+#endif
+
 #ifdef _WIN32
     typedef volatile c89atomic_flag atomic_flag;
     typedef volatile c89atomic_bool atomic_bool;
@@ -2749,7 +2756,41 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlo
     typedef volatile intmax_t atomic_intmax_t;
     typedef volatile uintmax_t atomic_uintmax_t;
     typedef volatile void *atomic_ptr_t;
+
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_cas_32(atomic_int *a, c89atomic_int32 *cmp, c89atomic_int32 set) {
+        c89atomic_int32 initial_cmp = *cmp;
+        c89atomic_int32 initial_a = _InterlockedCompareExchange((atomic_long *)a, set, initial_cmp);
+        c89atomic_bool ret = (initial_a == initial_cmp);
+        if (!ret)
+            *cmp = initial_a;
+
+        return ret;
+    }
+
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_cas_64(atomic_llong *a, c89atomic_int64 *cmp, c89atomic_int64 set) {
+        c89atomic_int64 initial_cmp = *cmp;
+        c89atomic_int64 initial_a = _InterlockedCompareExchange64((atomic_llong *)a, (c89atomic_int64)set, (c89atomic_int64)initial_cmp);
+        c89atomic_bool ret = (initial_a == initial_cmp);
+        if (!ret)
+            *cmp = initial_a;
+
+        return ret;
+    }
+
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_swap(atomic_ptr_t *a, void **cmp, void *set) {
+        void *initial_cmp = *cmp;
+        void *initial_a = _InterlockedCompareExchangePointer(a, set, initial_cmp);
+        c89atomic_bool ret = (initial_a == initial_cmp);
+        if (!ret)
+            *cmp = initial_a;
+
+        return ret;
+    }
+
 #define make_atomic(type, var)  typedef volatile type var;
+#define atomic_cas_32(obj, expected, desired)   c89atomic_cas_32((atomic_int *)obj, (c89atomic_int32 *)expected, (c89atomic_int32)desired)
+#define atomic_cas(obj, expected, desired)  c89atomic_cas_64((atomic_llong *)obj, (c89atomic_int64 *)expected, (c89atomic_int64)desired)
+#define atomic_swap(obj, expected, desired) c89atomic_swap((atomic_ptr_t *)obj, expected, desired)
 #else
     typedef volatile _Atomic(c89atomic_flag)atomic_flag;
     typedef volatile _Atomic(c89atomic_bool)atomic_bool;
@@ -2771,7 +2812,11 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlo
     typedef volatile _Atomic(intmax_t)atomic_intmax_t;
     typedef volatile _Atomic(uintmax_t)atomic_uintmax_t;
     typedef volatile _Atomic(void *)atomic_ptr_t;
+
 #define make_atomic(type, var)  typedef volatile _Atomic(type)var;
+#define atomic_cas_32(P, E, D)  __atomic_compare_exchange_n((P), (E), (D), 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+#define atomic_cas(P, E, D)     __atomic_compare_exchange_n((P), (E), (D), 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+#define atomic_swap(P, E, D)    __atomic_compare_exchange_n((P), (E), (D), 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 #endif
 
 /* sets an atomic_flag to false */
@@ -2842,7 +2887,7 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlo
 /* swaps a value with an atomic object if the old value is what is expected, otherwise reads the old value */
 #define atomic_compare_exchange_weak(obj, expected, desired)	c89atomic_compare_exchange_weak_32((c89atomic_uint32 *)obj, expected, desired)
 /* swaps a value with an atomic object if the old value is what is expected, otherwise reads the old value */
-#define atomic_compare_exchange_weak_explicit(obj, expected, desired, succ, fail)	c89atomic_compare_exchange_weak_explicit_32((c89atomic_uint32 *)obj, expected, desired, succ, fail)
+#define atomic_compare_exchange_weak_explicit(obj, expected, desired, succ, fail)	c89atomic_compare_exchange_weak_explicit_32((c89atomic_uint32 *)obj, (c89atomic_uint32)expected, desired, succ, fail)
 
 /* swaps a value with an atomic object if the old value is what is expected, otherwise reads the old value */
 #define atomic_compare_exchange_strong(obj, expected, desired)	c89atomic_compare_exchange_strong_32((c89atomic_uint32 *)obj, expected, desired)
@@ -2900,7 +2945,7 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlo
 /* swaps a value with an atomic object if the old value is what is expected, otherwise reads the old value */
 #define atomic_compare_exchange_weak(obj, expected, desired)	c89atomic_compare_exchange_weak_64((c89atomic_uint64 *)obj, expected, desired)
 /* swaps a value with an atomic object if the old value is what is expected, otherwise reads the old value */
-#define atomic_compare_exchange_weak_explicit(obj, expected, desired, succ, fail)	c89atomic_compare_exchange_weak_explicit_64((c89atomic_uint64 *)obj, expected, desired, succ, fail)
+#define atomic_compare_exchange_weak_explicit(obj, expected, desired, succ, fail)	c89atomic_compare_exchange_weak_explicit_64((c89atomic_uint64 *)obj, (c89atomic_uint64)expected, desired, succ, fail)
 
 /* swaps a value with an atomic object if the old value is what is expected, otherwise reads the old value */
 #define atomic_compare_exchange_strong(obj, expected, desired)	c89atomic_compare_exchange_strong_64((c89atomic_uint64 *)obj, expected, desired)
