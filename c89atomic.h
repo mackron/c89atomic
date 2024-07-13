@@ -2779,7 +2779,7 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlo
 
     static C89ATOMIC_INLINE c89atomic_bool c89atomic_swap(atomic_ptr_t *a, void **cmp, void *set) {
         void *initial_cmp = *cmp;
-        void *initial_a = _InterlockedCompareExchangePointer(a, set, initial_cmp);
+        void *initial_a = _InterlockedCompareExchangePointer((void *volatile *)a, set, initial_cmp);
         c89atomic_bool ret = (initial_a == initial_cmp);
         if (!ret)
             *cmp = initial_a;

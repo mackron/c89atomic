@@ -15,7 +15,6 @@
 #include <stdint.h>
 #include "c89atomic.h"
 #include <thread.h>
-#include <pthread.h>
 
 typedef struct __spmc_node spmc_node_t;
 make_atomic(spmc_node_t, atomic_spmc_t)
@@ -148,7 +147,7 @@ no_increment:
         idx = atomic_load_explicit(&node->front, memory_order_consume);
         if (!IS_READABLE(idx, node)) {
             if (node != spmc->curr_enqueue)
-                atomic_compare_exchange_strong(&spmc->curr_dequeue, (c89atomic_uint64 *) & node,
+                atomic_compare_exchange_strong(&spmc->curr_dequeue, &node,
                                                atomic_load_explicit(&node->next, memory_order_consume));
             goto no_increment;
         } else
@@ -202,16 +201,22 @@ static void *mc_thread(void *arg) {
 #define N_MC_THREADS 16
 int main() {
     spmc_ref_t spmc = spmc_new(0, NULL);
-    pthread_t mc[N_MC_THREADS], producer;
+    intptr_t mc[N_MC_THREADS], producer;
+    thread_arg targ[N_MC_THREADS], targ_p;
     int i;
 
-    pthread_create(&producer, NULL, producer_thread, spmc);
-    for (i = 0; i < N_MC_THREADS; i++)
-        pthread_create(&mc[i], NULL, mc_thread, spmc);
+    targ_p.fn = producer_thread;
+    targ_p.arg = spmc;
+    producer = thread_run(&targ_p);
+    for (i = 0; i < N_MC_THREADS; i++) {
+        targ[i].fn = mc_thread;
+        targ[i].arg = spmc;
+        mc[i] = thread_run(&targ[i]);
+    }
 
-    pthread_join(producer, NULL);
+    thread_join(producer);
     for (i = 0; i < N_MC_THREADS; i++)
-        pthread_join(mc[i], NULL);
+        thread_join(mc[i]);
 
     for (i = 0; i < N_MC_ITEMS; ++i) {
         if (observed_count[i] == 1)
