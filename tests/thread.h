@@ -10,7 +10,7 @@ struct thread_arg {
     void *arg;
 };
 
-extern void assert_expected(int res, int expected, const char *file, unsigned int line, const char *expr, const char *expected_str);
+extern void assert_expected(size_t res, size_t expected, const char *file, unsigned int line, const char *expr, const char *expected_str);
 
 typedef struct thread_arg thread_arg;
 

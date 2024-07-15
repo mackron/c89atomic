@@ -147,13 +147,13 @@ no_increment:
         idx = atomic_load_explicit(&node->front, memory_order_consume);
         if (!IS_READABLE(idx, node)) {
             if (node != spmc->curr_enqueue)
-                atomic_compare_exchange_strong(&spmc->curr_dequeue, &node,
-                                               atomic_load_explicit(&node->next, memory_order_consume));
+                atomic_swap(&spmc->curr_dequeue, &node,
+                                               (void *)atomic_load_explicit(&node->next, memory_order_consume));
             goto no_increment;
         } else
             *slot = node->buf[INDEX_OF(idx, node)];
     } while (
-        !atomic_compare_exchange_weak(&node->front, &(size_t){idx}, idx + 1));
+        !atomic_cas(&node->front, &(size_t){idx}, idx + 1));
     return true;
 }
 
