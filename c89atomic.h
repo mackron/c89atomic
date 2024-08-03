@@ -1321,14 +1321,18 @@ typedef unsigned char           c89atomic_bool;
     I've only seen this warning with compare_and_swap_64(). If this is happening with compare_and_swap_32/16/8(),
     just move the pragmas up to encapsulate the affected functions.
     */
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Watomic-alignment"
+    #if defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Watomic-alignment"
+    #endif
     static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 desired)
     {
         __atomic_compare_exchange_n(dst, &expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         return expected;
     }
-    #pragma clang diagnostic pop
+    #if defined(__clang__)
+        #pragma clang diagnostic pop
+    #endif
 
     typedef c89atomic_uint8 c89atomic_flag;
     #define c89atomic_flag_test_and_set_explicit(dst, order)        (c89atomic_bool)__atomic_test_and_set(dst, order)
