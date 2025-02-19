@@ -1323,7 +1323,9 @@ typedef unsigned char           c89atomic_bool;
     */
     #if defined(__clang__)
         #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Watomic-alignment"
+        #if __clang_major__ >= 8    /* <-- I don't know the exact version of Clang -Watomic-alignment was introduced, but it's definitely available in version 8. With my version of TrueOS2 I have Clang version 6 installed, but I'm getting a warning about an unknown warning group.  */
+            #pragma clang diagnostic ignored "-Watomic-alignment"
+        #endif
     #endif
     static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 desired)
     {
