@@ -357,7 +357,7 @@ typedef unsigned char           c89atomic_bool;
 #define C89ATOMIC_HAS_32
 #define C89ATOMIC_HAS_64
 
-#if (defined(_MSC_VER) /*&& !defined(__clang__)*/) || defined(__WATCOMC__) || defined(__DMC__)
+#if (defined(_MSC_VER)/* && !defined(__clang__)*/) || defined(__WATCOMC__) || defined(__DMC__)
     /* Visual C++. */
     #define C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, intrin, c89atomicType, msvcType)   \
         c89atomicType result; \
