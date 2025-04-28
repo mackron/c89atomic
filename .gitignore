@@ -1,0 +1,5 @@
+.vscode
+/#docs
+/build
+/tests/build
+/tests/bin
