@@ -351,6 +351,75 @@ typedef unsigned char           c89atomic_bool;
 #endif
 /* End Inline */
 
+
+/*
+Here is where we need to determine the code path we're going to take. This can get complicated
+due to the myriad of different compiler versions and available APIs.
+
+If you need to add support for a new (or old!) compiler, try figuring out which code path is
+most appropriate and try to plug it into the code path selection logic below. If none of the
+existing code paths are appropriate, you'll need to add a new code path and implement it.
+*/
+#if !defined(C89ATOMIC_MODERN_MSVC) && \
+    !defined(C89ATOMIC_LEGACY_MSVC) && \
+    !defined(C89ATOMIC_LEGACY_MSVC_ASM) && \
+    !defined(C89ATOMIC_MODERN_GCC) && \
+    !defined(C89ATOMIC_LEGACY_GCC) && \
+    !defined(C89ATOMIC_LEGACY_GCC_ASM) \
+    
+    #if (defined(_MSC_VER)) || defined(__WATCOMC__) || defined(__DMC__)
+        #if (defined(_MSC_VER) && _MSC_VER > 1600)
+            /* Visual Studio 2010 and later. This path uses _Interlocked* intrinsics. */
+            #define C89ATOMIC_MODERN_MSVC
+        #else
+            /* Old MSVC, or non-MSVC compilers with support for MSVC-style inlined assembly. */
+            #if defined(C89ATOMIC_X64)
+                /*
+                We cannot use inlined assembly for the 64-bit build because 64-bit inlined assembly is not supported
+                by any version of Visual Studio.
+                */
+                #define C89ATOMIC_LEGACY_MSVC
+            #else
+                /* This path uses MSVC-style inlined assembly. */
+                #define C89ATOMIC_LEGACY_MSVC_ASM
+            #endif
+        #endif
+    #elif (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7))) || defined(__clang__)
+        /* Modern GCC-compatible compilers. This path uses __atomic_* intrinsics. */
+        #define C89ATOMIC_MODERN_GCC
+    #else
+        #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
+            /* Legacy GCC-compatible compilers. This path uses __sync_* intrinsics. */
+            #define C89ATOMIC_LEGACY_GCC
+        #else
+            /* Ancient GCC compilers, or non-GCC compilers with support for GCC-style inlined assembly (Gas syntax). */
+            #define C89ATOMIC_LEGACY_GCC_ASM
+        #endif
+    #endif
+#endif
+
+/*
+The first thing we need to do is figure our our data type for c89atomic_flag. This reason we need
+to do this is that the C11 standard requires that atomic_flag be lock-free. Of our currently
+supported code paths, only 32-bit atomics are guaranteed to be lock-free across all everything
+we're currently supporting. If a new code path is added which doesn't support lock-free 32-bit
+atomics, logic will need to be added here to handle it.
+
+We need to do this as a separate step before the main implementation of each code path because
+we need to declare the c89atomic_spinlock type for cases where a lock-free implementation of a
+given atomic is not available.
+*/
+typedef c89atomic_uint32 c89atomic_flag;
+#define c89atomic_flag_test_and_set_explicit c89atomic_test_and_set_explicit_32
+#define c89atomic_flag_test_and_set          c89atomic_test_and_set_32
+#define c89atomic_flag_clear_explicit        c89atomic_clear_explicit_32
+#define c89atomic_flag_clear                 c89atomic_clear_32
+#define c89atomic_flag_load_explicit         c89atomic_load_explicit_32
+
+typedef c89atomic_flag c89atomic_spinlock;
+extern c89atomic_spinlock c89atomic_global_lock;
+
+
 /* Assume everything supports all standard sized atomics by default. We'll #undef these when not supported. */
 #define C89ATOMIC_HAS_8
 #define C89ATOMIC_HAS_16
@@ -1335,11 +1404,6 @@ typedef unsigned char           c89atomic_bool;
     #if defined(__clang__)
         #pragma clang diagnostic pop
     #endif
-
-    typedef c89atomic_uint8 c89atomic_flag;
-    #define c89atomic_flag_test_and_set_explicit(dst, order)        (c89atomic_bool)__atomic_test_and_set(dst, order)
-    #define c89atomic_flag_clear_explicit(dst, order)               __atomic_clear(dst, order)
-    #define c89atomic_flag_load_explicit(ptr, order)                c89atomic_load_explicit_8(ptr, order)
 #else
     /* GCC and compilers supporting GCC-style inlined assembly. */
     #define c89atomic_memory_order_relaxed  1
@@ -1535,7 +1599,7 @@ typedef unsigned char           c89atomic_bool;
         #define c89atomic_compare_and_swap_32(dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired)
         #define c89atomic_compare_and_swap_64(dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired) 
     #else
-        /* Non-GCC compilers supporting GCC-style inlined assembly. The inlined assembly below uses Gas syntax. */
+        /* Old GCC, or non-GCC compilers supporting GCC-style inlined assembly. The inlined assembly below uses Gas syntax. */
 
         /*
         It's actually kind of confusing as to the best way to implement a memory barrier on x86/64. From my quick research, it looks like
@@ -2035,11 +2099,6 @@ typedef unsigned char           c89atomic_bool;
     #define c89atomic_clear_explicit_16(dst, order)                 c89atomic_store_explicit_16(dst, 0, order)
     #define c89atomic_clear_explicit_32(dst, order)                 c89atomic_store_explicit_32(dst, 0, order)
     #define c89atomic_clear_explicit_64(dst, order)                 c89atomic_store_explicit_64(dst, 0, order)
-
-    typedef c89atomic_uint8 c89atomic_flag;
-    #define c89atomic_flag_test_and_set_explicit(ptr, order)        (c89atomic_bool)c89atomic_test_and_set_explicit_8(ptr, order)
-    #define c89atomic_flag_clear_explicit(ptr, order)               c89atomic_clear_explicit_8(ptr, order)
-    #define c89atomic_flag_load_explicit(ptr, order)                c89atomic_load_explicit_8(ptr, order)
 #endif
 
 /* compare_exchange() */
@@ -2241,11 +2300,6 @@ functions are just implemented as inlined functions.
 #else
     #error Unsupported architecture.
 #endif
-
-
-/* Implicit Flags. */
-#define c89atomic_flag_test_and_set(ptr)                                c89atomic_flag_test_and_set_explicit(ptr, c89atomic_memory_order_seq_cst)
-#define c89atomic_flag_clear(ptr)                                       c89atomic_flag_clear_explicit(ptr, c89atomic_memory_order_seq_cst)
 
 
 /* Implicit Pointer. */
@@ -2695,8 +2749,6 @@ static C89ATOMIC_INLINE double c89atomic_compare_and_swap_f64(volatile double* d
 
 
 /* Spinlock */
-typedef c89atomic_flag c89atomic_spinlock;
-
 static C89ATOMIC_INLINE void c89atomic_spinlock_lock(volatile c89atomic_spinlock* pSpinlock)
 {
     for (;;) {

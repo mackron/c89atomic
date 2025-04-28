@@ -9,7 +9,7 @@ Tests basic logic of all atomic functions. Does not test atomicity.
 #define OLD_VAL 42
 
 
-void c89atomic_test__basic__flag_test_and_set()
+void c89atomic_test__basic__flag_test_and_set(void)
 {
     printf("c89atomic_flag_test_and_set():\n");
 
@@ -29,7 +29,7 @@ void c89atomic_test__basic__flag_test_and_set()
     printf("\n");
 }
 
-void c89atomic_test__basic__flag_clear()
+void c89atomic_test__basic__flag_clear(void)
 {
     printf("c89atomic_flag_clear():\n");
 
@@ -49,7 +49,7 @@ void c89atomic_test__basic__flag_clear()
 }
 
 
-void c89atomic_test__basic__load()
+void c89atomic_test__basic__load(void)
 {
     printf("c89atomic_load_*():\n");
 
@@ -100,7 +100,7 @@ void c89atomic_test__basic__load()
     printf("\n");
 }
 
-void c89atomic_test__basic__store()
+void c89atomic_test__basic__store(void)
 {
     printf("c89atomic_store_*():\n");
 
@@ -160,7 +160,7 @@ void c89atomic_test__basic__store()
 }
 
 
-void c89atomic_test__basic__exchange()
+void c89atomic_test__basic__exchange(void)
 {
     printf("c89atomic_exchange_*():\n");
 
@@ -224,7 +224,7 @@ void c89atomic_test__basic__exchange()
 }
 
 
-void c89atomic_test__basic__compare_exchange_strong()
+void c89atomic_test__basic__compare_exchange_strong(void)
 {
     printf("c89atomic_compare_exchange_strong_*():\n");
 
@@ -320,7 +320,7 @@ void c89atomic_test__basic__compare_exchange_strong()
 }
 
 
-void c89atomic_test__basic__compare_exchange_weak()
+void c89atomic_test__basic__compare_exchange_weak(void)
 {
     printf("c89atomic_compare_exchange_weak_*():\n");
 
@@ -416,7 +416,7 @@ void c89atomic_test__basic__compare_exchange_weak()
 }
 
 
-void c89atomic_test__basic__fetch_add()
+void c89atomic_test__basic__fetch_add(void)
 {
     printf("c89atomic_fetch_add_*():\n");
 
@@ -479,7 +479,7 @@ void c89atomic_test__basic__fetch_add()
     printf("\n");
 }
 
-void c89atomic_test__basic__fetch_sub()
+void c89atomic_test__basic__fetch_sub(void)
 {
     printf("c89atomic_fetch_sub_*():\n");
 
@@ -543,7 +543,7 @@ void c89atomic_test__basic__fetch_sub()
 }
 
 
-void c89atomic_test__basic__fetch_or()
+void c89atomic_test__basic__fetch_or(void)
 {
     printf("c89atomic_fetch_or_*():\n");
 
@@ -606,7 +606,7 @@ void c89atomic_test__basic__fetch_or()
     printf("\n");
 }
 
-void c89atomic_test__basic__fetch_xor()
+void c89atomic_test__basic__fetch_xor(void)
 {
     printf("c89atomic_fetch_xor_*():\n");
 
@@ -669,7 +669,7 @@ void c89atomic_test__basic__fetch_xor()
     printf("\n");
 }
 
-void c89atomic_test__basic__fetch_and()
+void c89atomic_test__basic__fetch_and(void)
 {
     printf("c89atomic_fetch_and_*():\n");
 
@@ -734,7 +734,7 @@ void c89atomic_test__basic__fetch_and()
 
 
 /* compare_and_swap() */
-void c89atomic_test__basic__compare_and_swap()
+void c89atomic_test__basic__compare_and_swap(void)
 {
     printf("c89atomic_compare_and_swap_*():\n");
 
