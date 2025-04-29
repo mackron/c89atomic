@@ -60,7 +60,7 @@ the same for the weak versions and other sizes, and only for Visual Studio and o
 ```c
 c89atomic_bool c89atomic_compare_exchange_strong_explicit_32(volatile c89atomic_uint32* dst,
                                                              volatile c89atomic_uint32* expected,
-                                                             c89atomic_uint32 desired,
+                                                             c89atomic_uint32 replacement,
                                                              c89atomic_memory_order successOrder,
                                                              c89atomic_memory_order failureOrder)
 {
@@ -68,7 +68,7 @@ c89atomic_bool c89atomic_compare_exchange_strong_explicit_32(volatile c89atomic_
     c89atomic_uint32 result;
 
     expectedValue = c89atomic_load_explicit_32(expected, c89atomic_memory_order_seq_cst);
-    result = c89atomic_compare_and_swap_32(dst, expectedValue, desired);
+    result = c89atomic_compare_and_swap_32(dst, expectedValue, replacement);
     if (result == expectedValue) {
         return 1;
     } else {
@@ -448,28 +448,28 @@ For most code paths, the entire implementation will be in the first part.
         } \
         return result;
 
-    #define C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, expected, desired, order, intrin, c89atomicType, msvcType)   \
+    #define C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, expected, replacement, order, intrin, c89atomicType, msvcType)   \
         c89atomicType result; \
         switch (order) \
         { \
             case c89atomic_memory_order_relaxed: \
             { \
-                result = (c89atomicType)intrin##_nf((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
+                result = (c89atomicType)intrin##_nf((volatile msvcType*)ptr, (msvcType)expected, (msvcType)replacement); \
             } break; \
             case c89atomic_memory_order_consume: \
             case c89atomic_memory_order_acquire: \
             { \
-                result = (c89atomicType)intrin##_acq((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
+                result = (c89atomicType)intrin##_acq((volatile msvcType*)ptr, (msvcType)expected, (msvcType)replacement); \
             } break; \
             case c89atomic_memory_order_release: \
             { \
-                result = (c89atomicType)intrin##_rel((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
+                result = (c89atomicType)intrin##_rel((volatile msvcType*)ptr, (msvcType)expected, (msvcType)replacement); \
             } break; \
             case c89atomic_memory_order_acq_rel: \
             case c89atomic_memory_order_seq_cst: \
             default: \
             { \
-                result = (c89atomicType)intrin((volatile msvcType*)ptr, (msvcType)expected, (msvcType)desired); \
+                result = (c89atomicType)intrin((volatile msvcType*)ptr, (msvcType)expected, (msvcType)replacement); \
             } break; \
         } \
         return result;
@@ -511,14 +511,14 @@ For most code paths, the entire implementation will be in the first part.
 
     /* atomic_compare_and_swap */
     #if defined(C89ATOMIC_LEGACY_MSVC_ASM)
-        static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 desired)
+        static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 replacement)
         {
             c89atomic_uint32 result = 0;
             
             __asm {
                 mov ecx, dst
                 mov eax, expected
-                mov edx, desired
+                mov edx, replacement
                 lock cmpxchg [ecx], edx /* Writes to EAX which MSVC will treat as the return value. */
                 mov result, eax
             }
@@ -526,7 +526,7 @@ For most code paths, the entire implementation will be in the first part.
             return result;
         }
 
-        static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 desired)
+        static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 replacement)
         {
             c89atomic_uint32 resultEAX = 0;
             c89atomic_uint32 resultEDX = 0;
@@ -535,8 +535,8 @@ For most code paths, the entire implementation will be in the first part.
                 mov esi, dst    /* From Microsoft documentation: "... you don't need to preserve the EAX, EBX, ECX, EDX, ESI, or EDI registers." Choosing ESI since it's the next available one in their list. */
                 mov eax, dword ptr expected
                 mov edx, dword ptr expected + 4
-                mov ebx, dword ptr desired
-                mov ecx, dword ptr desired + 4
+                mov ebx, dword ptr replacement
+                mov ecx, dword ptr replacement + 4
                 lock cmpxchg8b qword ptr [esi]  /* Writes to EAX:EDX which MSVC will treat as the return value. */
                 mov resultEAX, eax
                 mov resultEDX, edx
@@ -545,8 +545,8 @@ For most code paths, the entire implementation will be in the first part.
             return ((c89atomic_uint64)resultEDX << 32) | resultEAX;
         }
     #else
-        #define c89atomic_compare_and_swap_32(dst, expected, desired) (c89atomic_uint32)_InterlockedCompareExchange((volatile long*)dst, (long)desired, (long)expected)
-        #define c89atomic_compare_and_swap_64(dst, expected, desired) (c89atomic_uint64)_InterlockedCompareExchange64((volatile c89atomic_int64*)dst, (c89atomic_int64)desired, (c89atomic_int64)expected)
+        #define c89atomic_compare_and_swap_32(dst, expected, replacement) (c89atomic_uint32)_InterlockedCompareExchange((volatile long*)dst, (long)replacement, (long)expected)
+        #define c89atomic_compare_and_swap_64(dst, expected, replacement) (c89atomic_uint64)_InterlockedCompareExchange64((volatile c89atomic_int64*)dst, (c89atomic_int64)replacement, (c89atomic_int64)expected)
     #endif
 
 
@@ -975,15 +975,15 @@ For most code paths, the entire implementation will be in the first part.
     #define c89atomic_exchange_explicit_32(dst, src, order)         __atomic_exchange_n(dst, src, order)
     #define c89atomic_exchange_explicit_64(dst, src, order)         __atomic_exchange_n(dst, src, order)
 
-    #define c89atomic_compare_exchange_strong_explicit_8( dst, expected, desired, successOrder, failureOrder)   __atomic_compare_exchange_n(dst, expected, desired, 0, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_strong_explicit_16(dst, expected, desired, successOrder, failureOrder)   __atomic_compare_exchange_n(dst, expected, desired, 0, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_strong_explicit_32(dst, expected, desired, successOrder, failureOrder)   __atomic_compare_exchange_n(dst, expected, desired, 0, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_strong_explicit_64(dst, expected, desired, successOrder, failureOrder)   __atomic_compare_exchange_n(dst, expected, desired, 0, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_strong_explicit_8( dst, expected, replacement, successOrder, failureOrder)   __atomic_compare_exchange_n(dst, expected, replacement, 0, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_strong_explicit_16(dst, expected, replacement, successOrder, failureOrder)   __atomic_compare_exchange_n(dst, expected, replacement, 0, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_strong_explicit_32(dst, expected, replacement, successOrder, failureOrder)   __atomic_compare_exchange_n(dst, expected, replacement, 0, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_strong_explicit_64(dst, expected, replacement, successOrder, failureOrder)   __atomic_compare_exchange_n(dst, expected, replacement, 0, successOrder, failureOrder)
 
-    #define c89atomic_compare_exchange_weak_explicit_8( dst, expected, desired, successOrder, failureOrder)     __atomic_compare_exchange_n(dst, expected, desired, 1, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_weak_explicit_16(dst, expected, desired, successOrder, failureOrder)     __atomic_compare_exchange_n(dst, expected, desired, 1, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_weak_explicit_32(dst, expected, desired, successOrder, failureOrder)     __atomic_compare_exchange_n(dst, expected, desired, 1, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_weak_explicit_64(dst, expected, desired, successOrder, failureOrder)     __atomic_compare_exchange_n(dst, expected, desired, 1, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_weak_explicit_8( dst, expected, replacement, successOrder, failureOrder)     __atomic_compare_exchange_n(dst, expected, replacement, 1, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_weak_explicit_16(dst, expected, replacement, successOrder, failureOrder)     __atomic_compare_exchange_n(dst, expected, replacement, 1, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_weak_explicit_32(dst, expected, replacement, successOrder, failureOrder)     __atomic_compare_exchange_n(dst, expected, replacement, 1, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_weak_explicit_64(dst, expected, replacement, successOrder, failureOrder)     __atomic_compare_exchange_n(dst, expected, replacement, 1, successOrder, failureOrder)
     
     #define c89atomic_fetch_add_explicit_8( dst, src, order)        __atomic_fetch_add(dst, src, order)
     #define c89atomic_fetch_add_explicit_16(dst, src, order)        __atomic_fetch_add(dst, src, order)
@@ -1011,21 +1011,21 @@ For most code paths, the entire implementation will be in the first part.
     #define c89atomic_fetch_and_explicit_64(dst, src, order)        __atomic_fetch_and(dst, src, order)
 
     /* CAS needs to be implemented as a function because _atomic_compare_exchange_n() needs to take the address of the expected value. */
-    static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 desired)
+    static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 replacement)
     {
-        __atomic_compare_exchange_n(dst, &expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        __atomic_compare_exchange_n(dst, &expected, replacement, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         return expected;
     }
 
-    static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 desired)
+    static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 replacement)
     {
-        __atomic_compare_exchange_n(dst, &expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        __atomic_compare_exchange_n(dst, &expected, replacement, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         return expected;
     }
 
-    static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 desired)
+    static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 replacement)
     {
-        __atomic_compare_exchange_n(dst, &expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        __atomic_compare_exchange_n(dst, &expected, replacement, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         return expected;
     }
 
@@ -1048,9 +1048,9 @@ For most code paths, the entire implementation will be in the first part.
             #pragma clang diagnostic ignored "-Watomic-alignment"
         #endif
     #endif
-    static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 desired)
+    static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 replacement)
     {
-        __atomic_compare_exchange_n(dst, &expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        __atomic_compare_exchange_n(dst, &expected, replacement, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         return expected;
     }
     #if defined(__clang__)
@@ -1247,10 +1247,10 @@ For most code paths, the entire implementation will be in the first part.
             return __sync_fetch_and_and(dst, src);
         }
 
-        #define c89atomic_compare_and_swap_8( dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired)
-        #define c89atomic_compare_and_swap_16(dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired)
-        #define c89atomic_compare_and_swap_32(dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired)
-        #define c89atomic_compare_and_swap_64(dst, expected, desired)   __sync_val_compare_and_swap(dst, expected, desired) 
+        #define c89atomic_compare_and_swap_8( dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
+        #define c89atomic_compare_and_swap_16(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
+        #define c89atomic_compare_and_swap_32(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
+        #define c89atomic_compare_and_swap_64(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement) 
     #elif defined(C89ATOMIC_LEGACY_GCC_ASM)
         /* Old GCC, or non-GCC compilers supporting GCC-style inlined assembly. The inlined assembly below uses Gas syntax. */
 
@@ -1810,14 +1810,14 @@ relatively small.
 
     /* atomic_compare_and_swap */
     #if defined(C89ATOMIC_LEGACY_MSVC_ASM)
-        static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 desired)
+        static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 replacement)
         {
             c89atomic_uint8 result = 0;
             
             __asm {
                 mov ecx, dst
                 mov al,  expected
-                mov dl,  desired
+                mov dl,  replacement
                 lock cmpxchg [ecx], dl  /* Writes to EAX which MSVC will treat as the return value. */
                 mov result, al
             }
@@ -1825,14 +1825,14 @@ relatively small.
             return result;
         }
 
-        static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 desired)
+        static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 replacement)
         {
             c89atomic_uint16 result = 0;
             
             __asm {
                 mov ecx, dst
                 mov ax,  expected
-                mov dx,  desired
+                mov dx,  replacement
                 lock cmpxchg [ecx], dx  /* Writes to EAX which MSVC will treat as the return value. */
                 mov result, ax
             }
@@ -1841,31 +1841,31 @@ relatively small.
         }
     #else
         #if defined(C89ATOMIC_MSVC_IS_LOCK_FREE_8_16)
-            #define c89atomic_compare_and_swap_8( dst, expected, desired) (c89atomic_uint8 )_InterlockedCompareExchange8((volatile char*)dst, (char)desired, (char)expected)
-            #define c89atomic_compare_and_swap_16(dst, expected, desired) (c89atomic_uint16)_InterlockedCompareExchange16((volatile short*)dst, (short)desired, (short)expected)
+            #define c89atomic_compare_and_swap_8( dst, expected, replacement) (c89atomic_uint8 )_InterlockedCompareExchange8((volatile char*)dst, (char)replacement, (char)expected)
+            #define c89atomic_compare_and_swap_16(dst, expected, replacement) (c89atomic_uint16)_InterlockedCompareExchange16((volatile short*)dst, (short)replacement, (short)expected)
         #else
-            static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 desired)
+            static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 replacement)
             {
                 c89atomic_uint8 result;
                 c89atomic_spinlock_lock(&c89atomic_global_lock);
                 {
                     result = *dst;
                     if (result == expected) {
-                        *dst = desired;
+                        *dst = replacement;
                     }
                 }
                 c89atomic_spinlock_unlock(&c89atomic_global_lock);
                 return result;
             }
 
-            static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 desired)
+            static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 replacement)
             {
                 c89atomic_uint16 result;
                 c89atomic_spinlock_lock(&c89atomic_global_lock);
                 {
                     result = *dst;
                     if (result == expected) {
-                        *dst = desired;
+                        *dst = replacement;
                     }
                 }
                 c89atomic_spinlock_unlock(&c89atomic_global_lock);
@@ -2296,7 +2296,7 @@ relatively small.
 
 /* compare_exchange() */
 #if !defined(C89ATOMIC_HAS_NATIVE_COMPARE_EXCHANGE)
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8* expected, c89atomic_uint8 desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8* expected, c89atomic_uint8 replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
         c89atomic_uint8 expectedValue;
         c89atomic_uint8 result;
@@ -2305,7 +2305,7 @@ relatively small.
         (void)failureOrder;
 
         expectedValue = c89atomic_load_explicit_8(expected, c89atomic_memory_order_seq_cst);
-        result = c89atomic_compare_and_swap_8(dst, expectedValue, desired);
+        result = c89atomic_compare_and_swap_8(dst, expectedValue, replacement);
         if (result == expectedValue) {
             return 1;
         } else {
@@ -2314,7 +2314,7 @@ relatively small.
         }
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16* expected, c89atomic_uint16 desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16* expected, c89atomic_uint16 replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
         c89atomic_uint16 expectedValue;
         c89atomic_uint16 result;
@@ -2323,7 +2323,7 @@ relatively small.
         (void)failureOrder;
 
         expectedValue = c89atomic_load_explicit_16(expected, c89atomic_memory_order_seq_cst);
-        result = c89atomic_compare_and_swap_16(dst, expectedValue, desired);
+        result = c89atomic_compare_and_swap_16(dst, expectedValue, replacement);
         if (result == expectedValue) {
             return 1;
         } else {
@@ -2332,7 +2332,7 @@ relatively small.
         }
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32* expected, c89atomic_uint32 desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32* expected, c89atomic_uint32 replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
         c89atomic_uint32 expectedValue;
         c89atomic_uint32 result;
@@ -2341,7 +2341,7 @@ relatively small.
         (void)failureOrder;
 
         expectedValue = c89atomic_load_explicit_32(expected, c89atomic_memory_order_seq_cst);
-        result = c89atomic_compare_and_swap_32(dst, expectedValue, desired);
+        result = c89atomic_compare_and_swap_32(dst, expectedValue, replacement);
         if (result == expectedValue) {
             return 1;
         } else {
@@ -2350,7 +2350,7 @@ relatively small.
         }
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_64(volatile c89atomic_uint64* dst, volatile c89atomic_uint64* expected, c89atomic_uint64 desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_64(volatile c89atomic_uint64* dst, volatile c89atomic_uint64* expected, c89atomic_uint64 replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
         c89atomic_uint64 expectedValue;
         c89atomic_uint64 result;
@@ -2359,7 +2359,7 @@ relatively small.
         (void)failureOrder;
 
         expectedValue = c89atomic_load_explicit_64(expected, c89atomic_memory_order_seq_cst);
-        result = c89atomic_compare_and_swap_64(dst, expectedValue, desired);
+        result = c89atomic_compare_and_swap_64(dst, expectedValue, replacement);
         if (result == expectedValue) {
             return 1;
         } else {
@@ -2368,10 +2368,10 @@ relatively small.
         }
     }
 
-    #define c89atomic_compare_exchange_weak_explicit_8( dst, expected, desired, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_8 (dst, expected, desired, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_weak_explicit_16(dst, expected, desired, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_16(dst, expected, desired, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_weak_explicit_32(dst, expected, desired, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_32(dst, expected, desired, successOrder, failureOrder)
-    #define c89atomic_compare_exchange_weak_explicit_64(dst, expected, desired, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_64(dst, expected, desired, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_weak_explicit_8( dst, expected, replacement, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_8 (dst, expected, replacement, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_weak_explicit_16(dst, expected, replacement, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_16(dst, expected, replacement, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_weak_explicit_32(dst, expected, replacement, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_32(dst, expected, replacement, successOrder, failureOrder)
+    #define c89atomic_compare_exchange_weak_explicit_64(dst, expected, replacement, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_64(dst, expected, replacement, successOrder, failureOrder)
 #endif  /* C89ATOMIC_HAS_NATIVE_COMPARE_EXCHANGE */
 
 #if !defined(C89ATOMIC_HAS_NATIVE_IS_LOCK_FREE)
@@ -2436,19 +2436,19 @@ functions are just implemented as inlined functions.
         return (void*)c89atomic_exchange_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64)src, order);
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_ptr(volatile void** dst, void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_ptr(volatile void** dst, void** expected, void* replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
-        return c89atomic_compare_exchange_strong_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)desired, successOrder, failureOrder);
+        return c89atomic_compare_exchange_strong_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)replacement, successOrder, failureOrder);
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_ptr(volatile void** dst, void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_ptr(volatile void** dst, void** expected, void* replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
-        return c89atomic_compare_exchange_weak_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)desired, successOrder, failureOrder);
+        return c89atomic_compare_exchange_weak_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)replacement, successOrder, failureOrder);
     }
 
-    static C89ATOMIC_INLINE void* c89atomic_compare_and_swap_ptr(volatile void** dst, void* expected, void* desired)
+    static C89ATOMIC_INLINE void* c89atomic_compare_and_swap_ptr(volatile void** dst, void* expected, void* replacement)
     {
-        return (void*)c89atomic_compare_and_swap_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64)expected, (c89atomic_uint64)desired);
+        return (void*)c89atomic_compare_and_swap_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64)expected, (c89atomic_uint64)replacement);
     }
 #elif defined(C89ATOMIC_32BIT)
     static C89ATOMIC_INLINE c89atomic_bool c89atomic_is_lock_free_ptr(volatile void** ptr)
@@ -2471,19 +2471,19 @@ functions are just implemented as inlined functions.
         return (void*)c89atomic_exchange_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32)src, order);
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_ptr(volatile void** dst, void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_ptr(volatile void** dst, void** expected, void* replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
-        return c89atomic_compare_exchange_strong_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)desired, successOrder, failureOrder);
+        return c89atomic_compare_exchange_strong_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)replacement, successOrder, failureOrder);
     }
 
-    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_ptr(volatile void** dst, void** expected, void* desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+    static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_ptr(volatile void** dst, void** expected, void* replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
     {
-        return c89atomic_compare_exchange_weak_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)desired, successOrder, failureOrder);
+        return c89atomic_compare_exchange_weak_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)replacement, successOrder, failureOrder);
     }
 
-    static C89ATOMIC_INLINE void* c89atomic_compare_and_swap_ptr(volatile void** dst, void* expected, void* desired)
+    static C89ATOMIC_INLINE void* c89atomic_compare_and_swap_ptr(volatile void** dst, void* expected, void* replacement)
     {
-        return (void*)c89atomic_compare_and_swap_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32)expected, (c89atomic_uint32)desired);
+        return (void*)c89atomic_compare_and_swap_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32)expected, (c89atomic_uint32)replacement);
     }
 #else
     #error Unsupported architecture.
@@ -2494,8 +2494,8 @@ functions are just implemented as inlined functions.
 #define c89atomic_store_ptr(dst, src)                                   c89atomic_store_explicit_ptr((volatile void**)dst, (void*)src, c89atomic_memory_order_seq_cst)
 #define c89atomic_load_ptr(ptr)                                         c89atomic_load_explicit_ptr((volatile void**)ptr, c89atomic_memory_order_seq_cst)
 #define c89atomic_exchange_ptr(dst, src)                                c89atomic_exchange_explicit_ptr((volatile void**)dst, (void*)src, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_strong_ptr(dst, expected, desired)   c89atomic_compare_exchange_strong_explicit_ptr((volatile void**)dst, (void**)expected, (void*)desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_weak_ptr(dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_ptr((volatile void**)dst, (void**)expected, (void*)desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_ptr(dst, expected, replacement)   c89atomic_compare_exchange_strong_explicit_ptr((volatile void**)dst, (void**)expected, (void*)replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_ptr(dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_ptr((volatile void**)dst, (void**)expected, (void*)replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
 
 
 /* Implicit Unsigned Integer. */
@@ -2524,15 +2524,15 @@ functions are just implemented as inlined functions.
 #define c89atomic_exchange_32(dst, src)                                 c89atomic_exchange_explicit_32(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_exchange_64(dst, src)                                 c89atomic_exchange_explicit_64(dst, src, c89atomic_memory_order_seq_cst)
 
-#define c89atomic_compare_exchange_strong_8( dst, expected, desired)    c89atomic_compare_exchange_strong_explicit_8( dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_strong_16(dst, expected, desired)    c89atomic_compare_exchange_strong_explicit_16(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_strong_32(dst, expected, desired)    c89atomic_compare_exchange_strong_explicit_32(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_strong_64(dst, expected, desired)    c89atomic_compare_exchange_strong_explicit_64(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_8( dst, expected, replacement)    c89atomic_compare_exchange_strong_explicit_8( dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_16(dst, expected, replacement)    c89atomic_compare_exchange_strong_explicit_16(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_32(dst, expected, replacement)    c89atomic_compare_exchange_strong_explicit_32(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_64(dst, expected, replacement)    c89atomic_compare_exchange_strong_explicit_64(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
 
-#define c89atomic_compare_exchange_weak_8(  dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_8( dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_weak_16( dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_16(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_weak_32( dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_32(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_weak_64( dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_64(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_8(  dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_8( dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_16( dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_16(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_32( dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_32(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_64( dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_64(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
 
 #define c89atomic_fetch_add_8( dst, src)                                c89atomic_fetch_add_explicit_8( dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_fetch_add_16(dst, src)                                c89atomic_fetch_add_explicit_16(dst, src, c89atomic_memory_order_seq_cst)
@@ -2586,15 +2586,15 @@ functions are just implemented as inlined functions.
 #define c89atomic_exchange_explicit_i32(dst, src, order)                (c89atomic_int32)c89atomic_exchange_explicit_32((c89atomic_uint32*)dst, (c89atomic_uint32)src, order)
 #define c89atomic_exchange_explicit_i64(dst, src, order)                (c89atomic_int64)c89atomic_exchange_explicit_64((c89atomic_uint64*)dst, (c89atomic_uint64)src, order)
 
-#define c89atomic_compare_exchange_strong_explicit_i8( dst, expected, desired, successOrder, failureOrder)  c89atomic_compare_exchange_strong_explicit_8( (c89atomic_uint8* )dst, (c89atomic_uint8* )expected, (c89atomic_uint8 )desired, successOrder, failureOrder)
-#define c89atomic_compare_exchange_strong_explicit_i16(dst, expected, desired, successOrder, failureOrder)  c89atomic_compare_exchange_strong_explicit_16((c89atomic_uint16*)dst, (c89atomic_uint16*)expected, (c89atomic_uint16)desired, successOrder, failureOrder)
-#define c89atomic_compare_exchange_strong_explicit_i32(dst, expected, desired, successOrder, failureOrder)  c89atomic_compare_exchange_strong_explicit_32((c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)desired, successOrder, failureOrder)
-#define c89atomic_compare_exchange_strong_explicit_i64(dst, expected, desired, successOrder, failureOrder)  c89atomic_compare_exchange_strong_explicit_64((c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)desired, successOrder, failureOrder)
+#define c89atomic_compare_exchange_strong_explicit_i8( dst, expected, replacement, successOrder, failureOrder)  c89atomic_compare_exchange_strong_explicit_8( (c89atomic_uint8* )dst, (c89atomic_uint8* )expected, (c89atomic_uint8 )replacement, successOrder, failureOrder)
+#define c89atomic_compare_exchange_strong_explicit_i16(dst, expected, replacement, successOrder, failureOrder)  c89atomic_compare_exchange_strong_explicit_16((c89atomic_uint16*)dst, (c89atomic_uint16*)expected, (c89atomic_uint16)replacement, successOrder, failureOrder)
+#define c89atomic_compare_exchange_strong_explicit_i32(dst, expected, replacement, successOrder, failureOrder)  c89atomic_compare_exchange_strong_explicit_32((c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)replacement, successOrder, failureOrder)
+#define c89atomic_compare_exchange_strong_explicit_i64(dst, expected, replacement, successOrder, failureOrder)  c89atomic_compare_exchange_strong_explicit_64((c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)replacement, successOrder, failureOrder)
 
-#define c89atomic_compare_exchange_weak_explicit_i8( dst, expected, desired, successOrder, failureOrder)    c89atomic_compare_exchange_weak_explicit_8( (c89atomic_uint8* )dst, (c89atomic_uint8* )expected, (c89atomic_uint8 )desired, successOrder, failureOrder)
-#define c89atomic_compare_exchange_weak_explicit_i16(dst, expected, desired, successOrder, failureOrder)    c89atomic_compare_exchange_weak_explicit_16((c89atomic_uint16*)dst, (c89atomic_uint16*)expected, (c89atomic_uint16)desired, successOrder, failureOrder)
-#define c89atomic_compare_exchange_weak_explicit_i32(dst, expected, desired, successOrder, failureOrder)    c89atomic_compare_exchange_weak_explicit_32((c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)desired, successOrder, failureOrder)
-#define c89atomic_compare_exchange_weak_explicit_i64(dst, expected, desired, successOrder, failureOrder)    c89atomic_compare_exchange_weak_explicit_64((c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)desired, successOrder, failureOrder)
+#define c89atomic_compare_exchange_weak_explicit_i8( dst, expected, replacement, successOrder, failureOrder)    c89atomic_compare_exchange_weak_explicit_8( (c89atomic_uint8* )dst, (c89atomic_uint8* )expected, (c89atomic_uint8 )replacement, successOrder, failureOrder)
+#define c89atomic_compare_exchange_weak_explicit_i16(dst, expected, replacement, successOrder, failureOrder)    c89atomic_compare_exchange_weak_explicit_16((c89atomic_uint16*)dst, (c89atomic_uint16*)expected, (c89atomic_uint16)replacement, successOrder, failureOrder)
+#define c89atomic_compare_exchange_weak_explicit_i32(dst, expected, replacement, successOrder, failureOrder)    c89atomic_compare_exchange_weak_explicit_32((c89atomic_uint32*)dst, (c89atomic_uint32*)expected, (c89atomic_uint32)replacement, successOrder, failureOrder)
+#define c89atomic_compare_exchange_weak_explicit_i64(dst, expected, replacement, successOrder, failureOrder)    c89atomic_compare_exchange_weak_explicit_64((c89atomic_uint64*)dst, (c89atomic_uint64*)expected, (c89atomic_uint64)replacement, successOrder, failureOrder)
 
 #define c89atomic_fetch_add_explicit_i8( dst, src, order)               (c89atomic_int8 )c89atomic_fetch_add_explicit_8( (c89atomic_uint8* )dst, (c89atomic_uint8 )src, order)
 #define c89atomic_fetch_add_explicit_i16(dst, src, order)               (c89atomic_int16)c89atomic_fetch_add_explicit_16((c89atomic_uint16*)dst, (c89atomic_uint16)src, order)
@@ -2648,15 +2648,15 @@ functions are just implemented as inlined functions.
 #define c89atomic_exchange_i32(dst, src)                                c89atomic_exchange_explicit_i32(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_exchange_i64(dst, src)                                c89atomic_exchange_explicit_i64(dst, src, c89atomic_memory_order_seq_cst)
 
-#define c89atomic_compare_exchange_strong_i8( dst, expected, desired)   c89atomic_compare_exchange_strong_explicit_i8( dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_strong_i16(dst, expected, desired)   c89atomic_compare_exchange_strong_explicit_i16(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_strong_i32(dst, expected, desired)   c89atomic_compare_exchange_strong_explicit_i32(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_strong_i64(dst, expected, desired)   c89atomic_compare_exchange_strong_explicit_i64(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_i8( dst, expected, replacement)   c89atomic_compare_exchange_strong_explicit_i8( dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_i16(dst, expected, replacement)   c89atomic_compare_exchange_strong_explicit_i16(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_i32(dst, expected, replacement)   c89atomic_compare_exchange_strong_explicit_i32(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_i64(dst, expected, replacement)   c89atomic_compare_exchange_strong_explicit_i64(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
 
-#define c89atomic_compare_exchange_weak_i8( dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_i8( dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_weak_i16(dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_i16(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_weak_i32(dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_i32(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_weak_i64(dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_i64(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_i8( dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_i8( dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_i16(dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_i16(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_i32(dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_i32(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_i64(dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_i64(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
 
 #define c89atomic_fetch_add_i8( dst, src)                               c89atomic_fetch_add_explicit_i8( dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_fetch_add_i16(dst, src)                               c89atomic_fetch_add_explicit_i16(dst, src, c89atomic_memory_order_seq_cst)
@@ -2754,32 +2754,32 @@ static C89ATOMIC_INLINE double c89atomic_exchange_explicit_f64(volatile double* 
 }
 
 
-static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_f32(volatile float* dst, float* expected, float desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_f32(volatile float* dst, float* expected, float replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
 {
     c89atomic_if32 d;
-    d.f = desired;
+    d.f = replacement;
     return c89atomic_compare_exchange_strong_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32*)expected, d.i, successOrder, failureOrder);
 }
 
-static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_f64(volatile double* dst, double* expected, double desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_strong_explicit_f64(volatile double* dst, double* expected, double replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
 {
     c89atomic_if64 d;
-    d.f = desired;
+    d.f = replacement;
     return c89atomic_compare_exchange_strong_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64*)expected, d.i, successOrder, failureOrder);
 }
 
 
-static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_f32(volatile float* dst, float* expected, float desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_f32(volatile float* dst, float* expected, float replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
 {
     c89atomic_if32 d;
-    d.f = desired;
+    d.f = replacement;
     return c89atomic_compare_exchange_weak_explicit_32((volatile c89atomic_uint32*)dst, (c89atomic_uint32*)expected, d.i, successOrder, failureOrder);
 }
 
-static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_f64(volatile double* dst, double* expected, double desired, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
+static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_f64(volatile double* dst, double* expected, double replacement, c89atomic_memory_order successOrder, c89atomic_memory_order failureOrder)
 {
     c89atomic_if64 d;
-    d.f = desired;
+    d.f = replacement;
     return c89atomic_compare_exchange_weak_explicit_64((volatile c89atomic_uint64*)dst, (c89atomic_uint64*)expected, d.i, successOrder, failureOrder);
 }
 
@@ -2893,11 +2893,11 @@ static C89ATOMIC_INLINE double c89atomic_fetch_and_explicit_f64(volatile double*
 #define c89atomic_exchange_f32(dst, src)                                (float )c89atomic_exchange_explicit_f32(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_exchange_f64(dst, src)                                (double)c89atomic_exchange_explicit_f64(dst, src, c89atomic_memory_order_seq_cst)
 
-#define c89atomic_compare_exchange_strong_f32(dst, expected, desired)   c89atomic_compare_exchange_strong_explicit_f32(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_strong_f64(dst, expected, desired)   c89atomic_compare_exchange_strong_explicit_f64(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_f32(dst, expected, replacement)   c89atomic_compare_exchange_strong_explicit_f32(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_strong_f64(dst, expected, replacement)   c89atomic_compare_exchange_strong_explicit_f64(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
 
-#define c89atomic_compare_exchange_weak_f32(dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_f32(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
-#define c89atomic_compare_exchange_weak_f64(dst, expected, desired)     c89atomic_compare_exchange_weak_explicit_f64(dst, expected, desired, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_f32(dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_f32(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+#define c89atomic_compare_exchange_weak_f64(dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_f64(dst, expected, replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
 
 #define c89atomic_fetch_add_f32(dst, src)                               c89atomic_fetch_add_explicit_f32(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_fetch_add_f64(dst, src)                               c89atomic_fetch_add_explicit_f64(dst, src, c89atomic_memory_order_seq_cst)
@@ -2914,22 +2914,22 @@ static C89ATOMIC_INLINE double c89atomic_fetch_and_explicit_f64(volatile double*
 #define c89atomic_fetch_and_f32(dst, src)                               c89atomic_fetch_and_explicit_f32(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_fetch_and_f64(dst, src)                               c89atomic_fetch_and_explicit_f64(dst, src, c89atomic_memory_order_seq_cst)
 
-static C89ATOMIC_INLINE float c89atomic_compare_and_swap_f32(volatile float* dst, float expected, float desired)
+static C89ATOMIC_INLINE float c89atomic_compare_and_swap_f32(volatile float* dst, float expected, float replacement)
 {
     c89atomic_if32 r;
     c89atomic_if32 e, d;
     e.f = expected;
-    d.f = desired;
+    d.f = replacement;
     r.i = c89atomic_compare_and_swap_32((volatile c89atomic_uint32*)dst, e.i, d.i);
     return r.f;
 }
 
-static C89ATOMIC_INLINE double c89atomic_compare_and_swap_f64(volatile double* dst, double expected, double desired)
+static C89ATOMIC_INLINE double c89atomic_compare_and_swap_f64(volatile double* dst, double expected, double replacement)
 {
     c89atomic_if64 r;
     c89atomic_if64 e, d;
     e.f = expected;
-    d.f = desired;
+    d.f = replacement;
     r.i = c89atomic_compare_and_swap_64((volatile c89atomic_uint64*)dst, e.i, d.i);
     return r.f;
 }
