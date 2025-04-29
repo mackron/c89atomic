@@ -24,14 +24,17 @@ I'm happy to add support (pull requests appreciated). This library currently ass
 
 Usage
 -----
-This is a header-only library. Just add `c89atomic.h` to your source tree and include it:
+In most cases you can use this as a header-only library. Just add `c89atomic.h` to your source tree and
+include it:
 
 ```c
 #include "c89atomic.h"
 ```
 
-Everything is implemented with defines and inline functions. There are no source files or build scripts to
-deal with.
+Everything is implemented with defines and inline functions. In some cases there may not be native hardware
+support for a given atomic operation in which case the library will emulate it with a global spinlock. If
+you get errors about `c89atomic_global_lock` being undefined, you need to integrate c89atomic.c into your
+build. This will not usually be required on modern compilers.
 
 
 Differences With C11
@@ -40,7 +43,7 @@ For practicality, this is not a drop-in replacement for C11's `stdatomic.h`. Bel
 between c89atomic and stdatomic.
 
   * All operations require an explicit size which is specified by the name of the function, and only 8-,
-    16-, 32- and 64-bit operations are supported. Objects of an arbitrary sizes are not supported.
+    16-, 32- and 64-bit operations are supported. Objects of arbitrary sizes are not supported.
   * Some extra APIs are included:
     - `c89atomic_compare_and_swap_*()`
     - `c89atomic_test_and_set_*()`
