@@ -365,8 +365,7 @@ existing code paths are appropriate, you'll need to add a new code path and impl
     !defined(C89ATOMIC_LEGACY_MSVC_ASM) && \
     !defined(C89ATOMIC_MODERN_GCC) && \
     !defined(C89ATOMIC_LEGACY_GCC) && \
-    !defined(C89ATOMIC_LEGACY_GCC_ASM) \
-    
+    !defined(C89ATOMIC_LEGACY_GCC_ASM)
     #if (defined(_MSC_VER)) || defined(__WATCOMC__) || defined(__DMC__)
         #if (defined(_MSC_VER) && _MSC_VER > 1600)
             /* Visual Studio 2010 and later. This path uses _Interlocked* intrinsics. */
