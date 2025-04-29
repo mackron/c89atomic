@@ -1278,205 +1278,264 @@ For most code paths, the entire implementation will be in the first part.
         #endif
 
         /* compare_and_swap() */
-        static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 desired)
+        #define C89ATOMIC_CMPXCHG_GCC_X86(result, dst, expected, replacement) \
+            __asm__ __volatile__(            \
+                "lock; cmpxchg %2, %1"       \
+                : "=a"(result),     /* %0 */ \
+                  "=m"(*dst)        /* %1 */ \
+                : "r"(replacement), /* %2 */ \
+                  "0"(expected),    /* %3 */ \
+                  "m"(*dst)         /* %4 */ \
+                : "cc", "memory")
+
+        static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 replacement)
         {
             c89atomic_uint8 result;
-
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; cmpxchg %3, %0" : "+m"(*dst), "=a"(result) : "a"(expected), "d"(desired) : "cc");
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_CMPXCHG_GCC_X86(result, dst, expected, replacement);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
-        static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 desired)
+        static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 replacement)
         {
             c89atomic_uint16 result;
-
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; cmpxchg %3, %0" : "+m"(*dst), "=a"(result) : "a"(expected), "d"(desired) : "cc");
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_CMPXCHG_GCC_X86(result, dst, expected, replacement);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
-        static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 desired)
+        static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 replacement)
         {
             c89atomic_uint32 result;
-
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; cmpxchg %3, %0" : "+m"(*dst), "=a"(result) : "a"(expected), "d"(desired) : "cc");
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_CMPXCHG_GCC_X86(result, dst, expected, replacement);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
-        static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 desired)
+        static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 replacement)
         {
             volatile c89atomic_uint64 result;
-
-        #if defined(C89ATOMIC_X86)
-            /*
-            We can't use the standard CMPXCHG here because x86 does not support it with 64-bit values. We need to instead use CMPXCHG8B
-            which is a bit harder to use. The annoying part with this is the use of the -fPIC compiler switch which requires the EBX
-            register never be modified. The problem is that CMPXCHG8B requires us to write our desired value to it. I'm resolving this
-            by just pushing and popping the EBX register manually.
-            */
-            c89atomic_uint32 resultEAX;
-            c89atomic_uint32 resultEDX;
-            __asm__ __volatile__("push %%ebx; xchg %5, %%ebx; lock; cmpxchg8b %0; pop %%ebx" : "+m"(*dst), "=a"(resultEAX), "=d"(resultEDX) : "a"(expected & 0xFFFFFFFF), "d"(expected >> 32), "r"(desired & 0xFFFFFFFF), "c"(desired >> 32) : "cc");
-            result = ((c89atomic_uint64)resultEDX << 32) | resultEAX;
-        #elif defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; cmpxchg %3, %0" : "+m"(*dst), "=a"(result) : "a"(expected), "d"(desired) : "cc");
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86)
+            {
+                /*
+                We can't use the standard CMPXCHG here because x86 does not support it with 64-bit values. We need to instead use CMPXCHG8B
+                which is a bit harder to use. The annoying part with this is the use of the -fPIC compiler switch which requires the EBX
+                register never be modified. The problem is that CMPXCHG8B requires us to write our replacement value to it. I'm resolving this
+                by just pushing and popping the EBX register manually.
+                */
+                c89atomic_uint32 resultEAX;
+                c89atomic_uint32 resultEDX;
+                __asm__ __volatile__(
+                    "push %%ebx; xchg %5, %%ebx; lock; cmpxchg8b %0; pop %%ebx"
+                    : "=m"(*dst),                                        /* %0 */
+                      "=a"(resultEAX),                                   /* %1 */
+                      "=d"(resultEDX)                                    /* %2 */
+                    : "a"((c89atomic_uint32)(expected & 0xFFFFFFFF)),    /* %3 */
+                      "d"((c89atomic_uint32)(expected >> 32)),           /* %4 */
+                      "r"((c89atomic_uint32)(replacement & 0xFFFFFFFF)), /* %5 */
+                      "c"((c89atomic_uint32)(replacement >> 32)),        /* %6 */
+                      "m"(*dst)                                          /* %7 */
+                    : "cc", "memory");
+                result = ((c89atomic_uint64)resultEDX << 32) | resultEAX;
+            }
+            #elif defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_CMPXCHG_GCC_X86(result, dst, expected, replacement);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
 
         /* exchange() */
+        #define C89ATOMIC_XCHG_GCC_X86(result, dst, src) \
+            __asm__ __volatile__(        \
+                "lock; xchg %0, %1"      \
+                : "=a"(result), /* %0 */ \
+                  "=m"(*dst)    /* %1 */ \
+                : "0"(src),     /* %2 */ \
+                  "m"(*dst)     /* %3 */ \
+                : "cc", "memory")
+
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_exchange_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
             c89atomic_uint8 result = 0;
-                
             (void)order;
-
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; xchg %1, %0" : "+m"(*dst), "=a"(result) : "a"(src));
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_XCHG_GCC_X86(result, dst, src);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_exchange_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
             c89atomic_uint16 result = 0;
-                
             (void)order;
-            
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; xchg %1, %0" : "+m"(*dst), "=a"(result) : "a"(src));
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_XCHG_GCC_X86(result, dst, src);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_exchange_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
             c89atomic_uint32 result;
-                
             (void)order;
-
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; xchg %1, %0" : "+m"(*dst), "=a"(result) : "a"(src));
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_XCHG_GCC_X86(result, dst, src);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_exchange_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
             c89atomic_uint64 result;
-                
             (void)order;
-
-        #if defined(C89ATOMIC_X86)
-            do {
-                result = *dst;
-            } while (c89atomic_compare_and_swap_64(dst, result, src) != result);
-        #elif defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; xchg %1, %0" : "+m"(*dst), "=a"(result) : "a"(src));
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86)
+            {
+                do {
+                    result = *dst;
+                } while (c89atomic_compare_and_swap_64(dst, result, src) != result);
+            }
+            #elif defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_XCHG_GCC_X86(result, dst, src);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
 
         /* fetch_add() */
+        #define C89ATOMIC_XADD_GCC_X86(result, dst, src) \
+            __asm__ __volatile__(        \
+                "lock; xadd %0, %1"      \
+                : "=a"(result), /* %0 */ \
+                  "=m"(*dst)    /* %1 */ \
+                : "0"(src),     /* %2 */ \
+                  "m"(*dst)     /* %3 */ \
+                : "cc", "memory")
+
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_add_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
             c89atomic_uint8 result;
-                
             (void)order;
-
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; xadd %1, %0" : "+m"(*dst), "=a"(result) : "a"(src) : "cc");
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_XADD_GCC_X86(result, dst, src);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_add_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
             c89atomic_uint16 result;
-                
             (void)order;
-
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; xadd %1, %0" : "+m"(*dst), "=a"(result) : "a"(src) : "cc");
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_XADD_GCC_X86(result, dst, src);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_add_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
             c89atomic_uint32 result;
-                
             (void)order;
-
-        #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
-            __asm__ __volatile__("lock; xadd %1, %0" : "+m"(*dst), "=a"(result) : "a"(src) : "cc");
-        #else
-            #error Unsupported architecture. Please submit a feature request.
-        #endif
-
+            #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
+            {
+                C89ATOMIC_XADD_GCC_X86(result, dst, src);
+            }
+            #else
+            {
+                #error Unsupported architecture. Please submit a feature request.
+            }
+            #endif
             return result;
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_add_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-        #if defined(C89ATOMIC_X86)
-            c89atomic_uint64 oldValue;
-            c89atomic_uint64 newValue;
+            #if defined(C89ATOMIC_X86)
+            {
+                c89atomic_uint64 oldValue;
+                c89atomic_uint64 newValue;
 
-            (void)order;
+                do {
+                    oldValue = *dst;
+                    newValue = oldValue + src;
+                } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
-            do {
-                oldValue = *dst;
-                newValue = oldValue + src;
-            } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
+                (void)order;
+                return oldValue;
+            }
+            #elif defined(C89ATOMIC_X64)
+            {
+                c89atomic_uint64 result;
 
-            return oldValue;
-        #elif defined(C89ATOMIC_X64)
-            c89atomic_uint64 result;
+                C89ATOMIC_XADD_GCC_X86(result, dst, src);
 
-            (void)order;
-
-            __asm__ __volatile__("lock; xadd %1, %0" : "+m"(*dst), "=a"(result) : "a"(src) : "cc");
-
-            return result;
-        #endif
+                (void)order;
+                return result;
+            }
+            #endif
         }
 
         /* fetch_sub() */
