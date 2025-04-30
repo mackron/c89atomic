@@ -549,6 +549,36 @@ For most code paths, the entire implementation will be in the first part.
     #endif
 
 
+    /* Atomic loads can be implemented in terms of a compare-and-swap. Need to implement as functions to silence warnings about `order` being unused. */
+    static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_load_explicit_32(volatile const c89atomic_uint32* ptr, c89atomic_memory_order order)
+    {
+        #if defined(C89ATOMIC_ARM)
+        {
+            C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, 0, 0, order, _InterlockedCompareExchange, c89atomic_uint32, long);
+        }
+        #else
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_32((volatile c89atomic_uint32*)ptr, 0, 0);
+        }
+        #endif
+    }
+
+    static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_load_explicit_64(volatile const c89atomic_uint64* ptr, c89atomic_memory_order order)
+    {
+        #if defined(C89ATOMIC_ARM)
+        {
+            C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, 0, 0, order, _InterlockedCompareExchange64, c89atomic_uint64, long long);
+        }
+        #else
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_64((volatile c89atomic_uint64*)ptr, 0, 0);
+        }
+        #endif
+    }
+
+
     /* atomic_exchange_explicit */
     #if defined(C89ATOMIC_LEGACY_MSVC_ASM)
         static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_exchange_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
@@ -605,7 +635,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 oldValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
             } while (c89atomic_compare_and_swap_64(dst, oldValue, src) != oldValue);
 
             (void)order;    /* Always using the strongest memory order. */
@@ -671,7 +701,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue + src;
             } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -716,36 +746,6 @@ For most code paths, the entire implementation will be in the first part.
     #define c89atomic_signal_fence(order)   c89atomic_thread_fence(order)
 
 
-    /* Atomic loads can be implemented in terms of a compare-and-swap. Need to implement as functions to silence warnings about `order` being unused. */
-    static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_load_explicit_32(volatile const c89atomic_uint32* ptr, c89atomic_memory_order order)
-    {
-        #if defined(C89ATOMIC_ARM)
-        {
-            C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, 0, 0, order, _InterlockedCompareExchange, c89atomic_uint32, long);
-        }
-        #else
-        {
-            (void)order;    /* Always using the strongest memory order. */
-            return c89atomic_compare_and_swap_32((volatile c89atomic_uint32*)ptr, 0, 0);
-        }
-        #endif
-    }
-
-    static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_load_explicit_64(volatile const c89atomic_uint64* ptr, c89atomic_memory_order order)
-    {
-        #if defined(C89ATOMIC_ARM)
-        {
-            C89ATOMIC_MSVC_ARM_INTRINSIC_COMPARE_EXCHANGE(ptr, 0, 0, order, _InterlockedCompareExchange64, c89atomic_uint64, long long);
-        }
-        #else
-        {
-            (void)order;    /* Always using the strongest memory order. */
-            return c89atomic_compare_and_swap_64((volatile c89atomic_uint64*)ptr, 0, 0);
-        }
-        #endif
-    }
-
-
     /* atomic_store() is the same as atomic_exchange() but returns void. */
     #define c89atomic_store_explicit_32(dst, src, order) (void)c89atomic_exchange_explicit_32(dst, src, order)
     #define c89atomic_store_explicit_64(dst, src, order) (void)c89atomic_exchange_explicit_64(dst, src, order)
@@ -758,7 +758,7 @@ For most code paths, the entire implementation will be in the first part.
         c89atomic_uint32 newValue;
 
         do {
-            oldValue = *dst;
+            oldValue = c89atomic_load_explicit_32(dst, c89atomic_memory_order_relaxed);
             newValue = oldValue - src;
         } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
 
@@ -772,7 +772,7 @@ For most code paths, the entire implementation will be in the first part.
         c89atomic_uint64 newValue;
 
         do {
-            oldValue = *dst;
+            oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
             newValue = oldValue - src;
         } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -794,7 +794,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint32 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_32(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue & src;
             } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
 
@@ -816,7 +816,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue & src;
             } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -840,7 +840,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint32 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_32(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue ^ src;
             } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
 
@@ -862,7 +862,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue ^ src;
             } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -886,7 +886,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint32 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_32(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue | src;
             } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
 
@@ -908,7 +908,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue | src;
             } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -1071,6 +1071,39 @@ For most code paths, the entire implementation will be in the first part.
         /* Legacy GCC atomic built-ins. Everything is a full memory barrier. */    
         #define c89atomic_thread_fence(order) __sync_synchronize(), (void)order
 
+        /* compare_and_swap() */
+        #define c89atomic_compare_and_swap_8( dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
+        #define c89atomic_compare_and_swap_16(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
+        #define c89atomic_compare_and_swap_32(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
+        #define c89atomic_compare_and_swap_64(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement) 
+
+        /* Atomic loads can be implemented in terms of a compare-and-swap. Need to implement as functions to silence warnings about `order` being unused. */
+        static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_load_explicit_8(volatile const c89atomic_uint8* ptr, c89atomic_memory_order order)
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_8((c89atomic_uint8*)ptr, 0, 0);
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_load_explicit_16(volatile const c89atomic_uint16* ptr, c89atomic_memory_order order)
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_16((c89atomic_uint16*)ptr, 0, 0);
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_load_explicit_32(volatile const c89atomic_uint32* ptr, c89atomic_memory_order order)
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_32((c89atomic_uint32*)ptr, 0, 0);
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_load_explicit_64(volatile const c89atomic_uint64* ptr, c89atomic_memory_order order)
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_64((c89atomic_uint64*)ptr, 0, 0);
+        }
+
+
+
         /* exchange() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_exchange_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
@@ -1083,38 +1116,29 @@ For most code paths, the entire implementation will be in the first part.
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_exchange_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            c89atomic_uint16 oldValue;
-        
-            do {
-                oldValue = *dst;
-            } while (__sync_val_compare_and_swap(dst, oldValue, src) != oldValue);
-        
-            (void)order;
-            return oldValue;
+            if (order > c89atomic_memory_order_acquire) {
+                __sync_synchronize();
+            }
+
+            return __sync_lock_test_and_set(dst, src);
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_exchange_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            c89atomic_uint32 oldValue;
-        
-            do {
-                oldValue = *dst;
-            } while (__sync_val_compare_and_swap(dst, oldValue, src) != oldValue);
-        
-            (void)order;
-            return oldValue;
+            if (order > c89atomic_memory_order_acquire) {
+                __sync_synchronize();
+            }
+
+            return __sync_lock_test_and_set(dst, src);
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_exchange_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            c89atomic_uint64 oldValue;
-        
-            do {
-                oldValue = *dst;
-            } while (__sync_val_compare_and_swap(dst, oldValue, src) != oldValue);
-        
-            (void)order;
-            return oldValue;
+            if (order > c89atomic_memory_order_acquire) {
+                __sync_synchronize();
+            }
+
+            return __sync_lock_test_and_set(dst, src);
         }
 
 
@@ -1245,11 +1269,6 @@ For most code paths, the entire implementation will be in the first part.
             (void)order;
             return __sync_fetch_and_and(dst, src);
         }
-
-        #define c89atomic_compare_and_swap_8( dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
-        #define c89atomic_compare_and_swap_16(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
-        #define c89atomic_compare_and_swap_32(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
-        #define c89atomic_compare_and_swap_64(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement) 
     #elif defined(C89ATOMIC_LEGACY_GCC_ASM)
         /* Old GCC, or non-GCC compilers supporting GCC-style inlined assembly. The inlined assembly below uses Gas syntax. */
 
@@ -1371,6 +1390,32 @@ For most code paths, the entire implementation will be in the first part.
         }
 
 
+        /* Atomic loads can be implemented in terms of a compare-and-swap. Need to implement as functions to silence warnings about `order` being unused. */
+        static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_load_explicit_8(volatile const c89atomic_uint8* ptr, c89atomic_memory_order order)
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_8((c89atomic_uint8*)ptr, 0, 0);
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_load_explicit_16(volatile const c89atomic_uint16* ptr, c89atomic_memory_order order)
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_16((c89atomic_uint16*)ptr, 0, 0);
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_load_explicit_32(volatile const c89atomic_uint32* ptr, c89atomic_memory_order order)
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_32((c89atomic_uint32*)ptr, 0, 0);
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_load_explicit_64(volatile const c89atomic_uint64* ptr, c89atomic_memory_order order)
+        {
+            (void)order;    /* Always using the strongest memory order. */
+            return c89atomic_compare_and_swap_64((c89atomic_uint64*)ptr, 0, 0);
+        }
+
+
         /* exchange() */
         #define C89ATOMIC_XCHG_GCC_X86(result, dst, src) \
             __asm__ __volatile__(        \
@@ -1383,7 +1428,7 @@ For most code paths, the entire implementation will be in the first part.
 
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_exchange_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            c89atomic_uint8 result = 0;
+            c89atomic_uint8 result;
             (void)order;
             #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
             {
@@ -1399,7 +1444,7 @@ For most code paths, the entire implementation will be in the first part.
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_exchange_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            c89atomic_uint16 result = 0;
+            c89atomic_uint16 result;
             (void)order;
             #if defined(C89ATOMIC_X86) || defined(C89ATOMIC_X64)
             {
@@ -1518,7 +1563,7 @@ For most code paths, the entire implementation will be in the first part.
                 c89atomic_uint64 newValue;
 
                 do {
-                    oldValue = *dst;
+                    oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                     newValue = oldValue + src;
                 } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -1544,7 +1589,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint8 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_8(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint8)(oldValue - src);
             } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
 
@@ -1558,7 +1603,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint16 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_16(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint16)(oldValue - src);
             } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
 
@@ -1572,7 +1617,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint32 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_32(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue - src;
             } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
 
@@ -1586,7 +1631,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue - src;
             } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -1602,7 +1647,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint8 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_8(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint8)(oldValue & src);
             } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
 
@@ -1616,7 +1661,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint16 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_16(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint16)(oldValue & src);
             } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
 
@@ -1630,7 +1675,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint32 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_32(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue & src;
             } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
 
@@ -1644,7 +1689,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue & src;
             } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -1660,7 +1705,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint8 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_8(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint8)(oldValue ^ src);
             } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
 
@@ -1674,7 +1719,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint16 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_16(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint16)(oldValue ^ src);
             } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
 
@@ -1688,7 +1733,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint32 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_32(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue ^ src;
             } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
 
@@ -1702,7 +1747,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue ^ src;
             } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -1718,7 +1763,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint8 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_8(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint8)(oldValue | src);
             } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
 
@@ -1732,7 +1777,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint16 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_16(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint16)(oldValue | src);
             } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
 
@@ -1746,7 +1791,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint32 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_32(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue | src;
             } while (c89atomic_compare_and_swap_32(dst, oldValue, newValue) != oldValue);
 
@@ -1760,7 +1805,7 @@ For most code paths, the entire implementation will be in the first part.
             c89atomic_uint64 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_64(dst, c89atomic_memory_order_relaxed);
                 newValue = oldValue | src;
             } while (c89atomic_compare_and_swap_64(dst, oldValue, newValue) != oldValue);
 
@@ -1772,31 +1817,6 @@ For most code paths, the entire implementation will be in the first part.
     #endif
 
     #define c89atomic_signal_fence(order)                           c89atomic_thread_fence(order)
-
-    /* Atomic loads can be implemented in terms of a compare-and-swap. Need to implement as functions to silence warnings about `order` being unused. */
-    static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_load_explicit_8(volatile const c89atomic_uint8* ptr, c89atomic_memory_order order)
-    {
-        (void)order;    /* Always using the strongest memory order. */
-        return c89atomic_compare_and_swap_8((c89atomic_uint8*)ptr, 0, 0);
-    }
-
-    static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_load_explicit_16(volatile const c89atomic_uint16* ptr, c89atomic_memory_order order)
-    {
-        (void)order;    /* Always using the strongest memory order. */
-        return c89atomic_compare_and_swap_16((c89atomic_uint16*)ptr, 0, 0);
-    }
-
-    static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_load_explicit_32(volatile const c89atomic_uint32* ptr, c89atomic_memory_order order)
-    {
-        (void)order;    /* Always using the strongest memory order. */
-        return c89atomic_compare_and_swap_32((c89atomic_uint32*)ptr, 0, 0);
-    }
-
-    static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_load_explicit_64(volatile const c89atomic_uint64* ptr, c89atomic_memory_order order)
-    {
-        (void)order;    /* Always using the strongest memory order. */
-        return c89atomic_compare_and_swap_64((c89atomic_uint64*)ptr, 0, 0);
-    }
 
     #define c89atomic_store_explicit_8( dst, src, order)            (void)c89atomic_exchange_explicit_8 (dst, src, order)
     #define c89atomic_store_explicit_16(dst, src, order)            (void)c89atomic_exchange_explicit_16(dst, src, order)
@@ -2180,7 +2200,7 @@ relatively small.
         c89atomic_uint8 newValue;
 
         do {
-            oldValue = *dst;
+            oldValue = c89atomic_load_explicit_8(dst, c89atomic_memory_order_relaxed);
             newValue = (c89atomic_uint8)(oldValue - src);
         } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
 
@@ -2194,7 +2214,7 @@ relatively small.
         c89atomic_uint16 newValue;
 
         do {
-            oldValue = *dst;
+            oldValue = c89atomic_load_explicit_16(dst, c89atomic_memory_order_relaxed);
             newValue = (c89atomic_uint16)(oldValue - src);
         } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
 
@@ -2216,7 +2236,7 @@ relatively small.
             c89atomic_uint8 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_8(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint8)(oldValue & src);
             } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
 
@@ -2238,7 +2258,7 @@ relatively small.
             c89atomic_uint16 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_16(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint16)(oldValue & src);
             } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
 
@@ -2262,7 +2282,7 @@ relatively small.
             c89atomic_uint8 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_8(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint8)(oldValue ^ src);
             } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
 
@@ -2284,7 +2304,7 @@ relatively small.
             c89atomic_uint16 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_16(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint16)(oldValue ^ src);
             } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
 
@@ -2308,7 +2328,7 @@ relatively small.
             c89atomic_uint8 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_8(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint8)(oldValue | src);
             } while (c89atomic_compare_and_swap_8(dst, oldValue, newValue) != oldValue);
 
@@ -2330,7 +2350,7 @@ relatively small.
             c89atomic_uint16 newValue;
 
             do {
-                oldValue = *dst;
+                oldValue = c89atomic_load_explicit_16(dst, c89atomic_memory_order_relaxed);
                 newValue = (c89atomic_uint16)(oldValue | src);
             } while (c89atomic_compare_and_swap_16(dst, oldValue, newValue) != oldValue);
 
