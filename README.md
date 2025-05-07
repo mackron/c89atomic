@@ -10,16 +10,25 @@ enable the use of atomics in a mostly consistent manner to modern C, while still
 older compilers. This is *not* a drop-in replacement for C11 atomics, but is very similar. Only limited testing
 has been done so use at your own risk. I'm happy to accept feedback and pull requests with bug fixes.
 
-When compiling with GCC and Clang, this library will translate to a one-to-one wrapper around the `__atomic_*`
-intrinsics provided by the compiler.
+The following compilers are supported:
 
-When compiling with Visual C++ things are a bit more complicated because it does not have support for C11 style
-atomic intrinsics. This library will try to use the `_Interlocked*` intrinsics instead, and if unavailable will
-use inlined assembly (x86 only).
+  - Visual Studio from VC6 (Earlier versions may work, but are untested.)
+  - GCC starting from 2.7 (Earlier versions lack support for extended inline assembly.)
+  - Clang
+  - Intel oneAPI (Tested with 2025.0.4. Intel C++ Compiler Classic has not been tested.)
+  - TinyCC/TCC (Tested with 0.9.27)
+  - OpenWatcom (Tested with 2.0)
+  - Digital Mars
+  - Borland C++ (Tested with 5.02)
 
-Supported compilers are Visual Studio back to VC6, GCC and Clang. If you need support for a different compiler
-I'm happy to add support (pull requests appreciated). This library currently assumes the `int` data type is
-32 bits.
+New compilers will use intrinsics. GCC-likes, such as GCC and Clang, will use `__atomic_*` intrinsics through a
+pre-processor define and should have no overhead. This uses `__GNUC__` to detect GCC-likes.
+
+Old compilers, or compilers lacking support for intrinsics, will use inlined assembly. There are two inlined
+assembly paths: GCC-style (GAS syntax) and MSVC-style. For an old compiler to be supported, it must support one
+of these two paths. Note that only 32- and 64-bit x86 is supported for inlined assembly. I have not thouroughly
+tested the inlined assembly paths. It passes basics tests, but things like memory ordering may have some issues.
+Advice welcome on how to improve this.
 
 
 Usage
@@ -42,65 +51,10 @@ Differences With C11
 For practicality, this is not a drop-in replacement for C11's `stdatomic.h`. Below are the main differences
 between c89atomic and stdatomic.
 
-  * All operations require an explicit size which is specified by the name of the function, and only 8-,
-    16-, 32- and 64-bit operations are supported. Objects of arbitrary sizes are not supported.
-  * Some extra APIs are included:
-    - `c89atomic_compare_and_swap_*()`
-    - `c89atomic_test_and_set_*()`
-    - `c89atomic_clear_*()`
-  * All APIs are namespaced with `c89`.
-  * `c89atomic_*` data types are undecorated.
-
-
-Compare Exchange
-----------------
-This library implements a simple compare-and-swap function called `c89atomic_compare_and_swap_*()` which is
-slightly different to C11's `atomic_compare_exchange_*()`. This is named differently to distinguish between
-the two. `c89atomic_compare_and_swap_*()` returns the old value as the return value, whereas
-`atomic_compare_exchange_*()` will return it through a parameter and supports explicit memory orders for
-success and failure cases.
-
-With Visual Studio and versions of GCC earlier than 4.7, an implementation of `atomic_compare_exchange_*()`
-is included which is implemented in terms of `c89atomic_compare_and_swap_*()`, but there's subtle details to be
-aware of with this implementation. Note that the following only applies for Visual Studio and versions of GCC
-earlier than 4.7. Later versions of GCC and Clang use the `__atomic_compare_exchange_n()` intrinsic directly
-and are not subject to the following.
-
-Below is the 32-bit implementation of `c89atomic_compare_exchange_strong_explicit_32()` which is implemented
-the same for the weak versions and other sizes, and only for Visual Studio and old versions of GCC (prior to
-4.7):
-
-```c
-c89atomic_bool c89atomic_compare_exchange_strong_explicit_32(volatile c89atomic_uint32* dst,
-                                                             volatile c89atomic_uint32* expected,
-                                                             c89atomic_uint32 desired,
-                                                             c89atomic_memory_order successOrder,
-                                                             c89atomic_memory_order failureOrder)
-{
-    c89atomic_uint32 expectedValue;
-    c89atomic_uint32 result;
-
-    expectedValue = c89atomic_load_explicit_32(expected, c89atomic_memory_order_seq_cst);
-    result = c89atomic_compare_and_swap_32(dst, expectedValue, desired);
-    if (result == expectedValue) {
-        return 1;
-    } else {
-        c89atomic_store_explicit_32(expected, result, failureOrder);
-        return 0;
-    }
-}
-```
-
-The call to `c89atomic_store_explicit_32()` is not atomic with respect to the main compare-and-swap operation
-which may cause problems when `expected` points to memory that is shared between threads. This only becomes an
-issue if `expected` can be accessed from multiple threads at the same time which for the most part will never
-happen because a compare-and-swap will almost always be used in a loop with a local variable being used for the
-expected value.
-
-If the above is a concern, you should consider reworking your code to use `c89atomic_compare_and_swap_*()`
-directly, which is atomic and more efficient. Alternatively you'll need to use a lock to synchronize access
-to `expected`, upgrade your compiler, or use a different library.
-
+    * All operations require an explicit size which is specified by the name of the function, and only 8-,
+      16-, 32- and 64-bit operations are supported. Objects of an arbitrary sizes are not supported.
+    * All APIs are namespaced with `c89`.
+    * `c89atomic_*` data types are undecorated (there is no `_Atomic` decoration).
 
 
 Types and Functions
@@ -133,25 +87,9 @@ The following types and functions are implemented:
 +-----------------------------------------+-----------------------------------------------+
 | atomic_flag_test_and_set                | c89atomic_flag_test_and_set                   |
 | atomic_flag_test_and_set_explicit       | c89atomic_flag_test_and_set_explicit          |
-|                                         | c89atomic_test_and_set_8                      |
-|                                         | c89atomic_test_and_set_16                     |
-|                                         | c89atomic_test_and_set_32                     |
-|                                         | c89atomic_test_and_set_64                     |
-|                                         | c89atomic_test_and_set_explicit_8             |
-|                                         | c89atomic_test_and_set_explicit_16            |
-|                                         | c89atomic_test_and_set_explicit_32            |
-|                                         | c89atomic_test_and_set_explicit_64            |
 +-----------------------------------------+-----------------------------------------------+
 | atomic_flag_clear                       | c89atomic_flag_clear                          |
 | atomic_flag_clear_explicit              | c89atomic_flag_clear_explicit                 |
-|                                         | c89atomic_clear_8                             |
-|                                         | c89atomic_clear_16                            |
-|                                         | c89atomic_clear_32                            |
-|                                         | c89atomic_clear_64                            |
-|                                         | c89atomic_clear_explicit_8                    |
-|                                         | c89atomic_clear_explicit_16                   |
-|                                         | c89atomic_clear_explicit_32                   |
-|                                         | c89atomic_clear_explicit_64                   |
 +-----------------------------------------+-----------------------------------------------+
 | atomic_store                            | c89atomic_store_8                             |
 | atomic_store_explicit                   | c89atomic_store_16                            |
@@ -255,6 +193,5 @@ The following types and functions are implemented:
 |                                         | c89atomic_compare_and_swap_32                 |
 |                                         | c89atomic_compare_and_swap_64                 |
 |                                         | c89atomic_compare_and_swap_ptr                |
-|                                         | c89atomic_compiler_fence                      |
 +-----------------------------------------+-----------------------------------------------+
 ```

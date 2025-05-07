@@ -1,0 +1,1 @@
+dmc ../../tests/c89atomic_basic.c

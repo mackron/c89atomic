@@ -1,0 +1,20 @@
+I was able to get this compiling with Borland C++ 5.02, but only through the command line. When
+compiling from the IDE I get an "Out of hash space" error.
+
+You will need to install Turbo Assembler 5.0 (TASM). To do this, just download the ZIP archive
+from here:
+
+    https://github.com/qb40/tasm/releases/tag/1.0.0
+    
+Then just unzip that somewhere and add the "BIN" folder to your path environment variable.
+
+Borland C++ doesn't handle relative include paths like other compilers. It tries loading files
+relative to the current working directory rather than relative to the current file. To work around
+this you need to use the "-I" compiler switch. See build.bat in this directory for an example.
+
+The build.bat file can be used to make it easy to compile the test program and to also act as a
+reference. To use it, change into this directory and run it.
+
+PSA: If you're curious about playing with Borland C++ 5.02, be aware that for me the installer
+decided to just clear out my PATH environment variable. That's fun. Take a copy of your PATH if you
+decide to run the installer.
