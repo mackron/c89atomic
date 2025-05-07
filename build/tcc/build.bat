@@ -1,0 +1,1 @@
+tcc ../../tests/c89atomic_basic.c -Wall
