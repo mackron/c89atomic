@@ -711,8 +711,14 @@ int main(int argc, char** argv)
     #if defined(C89ATOMIC_ARM64)
         printf("ARM64\n");
     #endif
-    #if defined(C89ATOMIC_ARM)
+    #if defined(C89ATOMIC_ARM32)
         printf("ARM32\n");
+    #endif
+    #if defined(C89ATOMIC_PPC64)
+        printf("PowerPC64\n");
+    #endif
+    #if defined(C89ATOMIC_PPC32)
+        printf("PowerPC\n");
     #endif
 
 
