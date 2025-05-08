@@ -763,9 +763,23 @@ not represented here.
     #endif
 
     #if defined(C89ATOMIC_PPC32) || defined(C89ATOMIC_PPC64)
-        #define C89ATOMIC_IS_LOCK_FREE_8  1
-        #define C89ATOMIC_IS_LOCK_FREE_16 1
-        #define C89ATOMIC_IS_LOCK_FREE_32 1
+        /*
+        I've had a report that on GCC 4.2 it's possible for some 8-bit and 16-bit __sync* intrinsics to
+        not work correctly. To work around this, I'm going to make them use a spinlock instead. I do not
+        know which specific versions of GCC this affects, but it certainly is not happening with GCC 4.9 on
+        my PowerPC VM running Debian 8. I'm going to be concervative and lock this down to any version of
+        GCC that lacks support for the newer __atomic* intrinsics. The reason for this specific boundary is
+        that I'm assuming that with those versions of GCC that support the newer __atomic* intrinsics, the
+        __sync* intrinsics are just wrappers around __atomic* and should therefore not have the error.
+        */
+        #if (defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7))) && !defined(__clang__)
+            #define C89ATOMIC_IS_LOCK_FREE_8  0
+            #define C89ATOMIC_IS_LOCK_FREE_16 0
+        #else
+            #define C89ATOMIC_IS_LOCK_FREE_8  1
+            #define C89ATOMIC_IS_LOCK_FREE_16 1
+        #endif
+        #define C89ATOMIC_IS_LOCK_FREE_32     1
         #if defined(C89ATOMIC_PPC64)
             #define C89ATOMIC_IS_LOCK_FREE_64 1
         #endif
