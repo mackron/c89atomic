@@ -215,7 +215,14 @@ typedef unsigned int            c89atomic_uint32;
     typedef unsigned long long  c89atomic_uint64;
 #endif
 
-typedef unsigned char           c89atomic_bool;
+/*
+The boolean data type is 32-bit here because it's the most reliable size for ensuring atomic operations
+are lock-free. For example, on Visual Studio 2010 and older, 8-bit and 16-bit atomics are not lock-free
+on the 64-bit build because those compilers lack support for intrinsics for those sizes, and since there
+is no support for inlined assembly on 64-bit builds in any version of Visual Studio, there's no practical
+way to implement a fallback outside of external linkage.
+*/
+typedef c89atomic_uint32        c89atomic_bool;
 /* End Sized Types */
 
 

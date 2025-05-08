@@ -2,6 +2,7 @@
 Tests basic logic of all atomic functions. Does not test atomicity.
 */
 #include <stdio.h>
+#include <string.h>
 
 //#define C89ATOMIC_MODERN_GCC
 //#define C89ATOMIC_LEGACY_GCC
@@ -583,9 +584,40 @@ void c89atomic_test__basic__compare_and_swap(void)
 }
 
 
+#define C89ATOMIC_CHECK_SIZEOF(type, size) \
+{ \
+    printf("sizeof(%s)%*.s== %d ", #type, 17 - (int)strlen(#type), "", size); \
+    if (sizeof(type) != size) { \
+        c89atomic_test_failed(); \
+    } else { \
+        c89atomic_test_passed(); \
+    } \
+}
+
+static void c89atomic_test__basic__sizeof(void)
+{
+    C89ATOMIC_CHECK_SIZEOF(c89atomic_int8,   1);
+    C89ATOMIC_CHECK_SIZEOF(c89atomic_uint8,  1);
+    C89ATOMIC_CHECK_SIZEOF(c89atomic_int16,  2);
+    C89ATOMIC_CHECK_SIZEOF(c89atomic_uint16, 2);
+    C89ATOMIC_CHECK_SIZEOF(c89atomic_int32,  4);
+    C89ATOMIC_CHECK_SIZEOF(c89atomic_uint32, 4);
+    C89ATOMIC_CHECK_SIZEOF(c89atomic_int64,  8);
+    C89ATOMIC_CHECK_SIZEOF(c89atomic_uint64, 8);
+    printf("\n");
+}
+
+
 int main(int argc, char** argv)
 {
     enable_colored_output();
+
+    /* The size of basic types must be valid. If not, the architecture/compiler/platform is not supported. */
+    c89atomic_test__basic__sizeof();
+    if (g_ErrorCount > 0) {
+        printf("Tests cannot continue because the size of one or more basic types are not valid.\n");
+        return 1;
+    }
 
     c89atomic_test__basic__flag_test_and_set();
     c89atomic_test__basic__flag_clear();
