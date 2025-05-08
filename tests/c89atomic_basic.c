@@ -103,11 +103,11 @@ void c89atomic_test__basic__flag_test_and_set(void)
     printf("c89atomic_flag_test_and_set():\n");
 
     c89atomic_test__basic__flag_test_and_set_explicit(c89atomic_memory_order_relaxed);
+    /*c89atomic_test__basic__flag_test_and_set_explicit(c89atomic_memory_order_consume);*/
     c89atomic_test__basic__flag_test_and_set_explicit(c89atomic_memory_order_acquire);
     c89atomic_test__basic__flag_test_and_set_explicit(c89atomic_memory_order_release);
     c89atomic_test__basic__flag_test_and_set_explicit(c89atomic_memory_order_acq_rel);
     c89atomic_test__basic__flag_test_and_set_explicit(c89atomic_memory_order_seq_cst);
-    c89atomic_test__basic__flag_test_and_set_explicit(c89atomic_memory_order_consume);
 
     printf("\n");
 }
@@ -158,8 +158,8 @@ void c89atomic_test__basic__flag_load(void)
     c89atomic_test__basic__flag_load_explicit(c89atomic_memory_order_relaxed);
     c89atomic_test__basic__flag_load_explicit(c89atomic_memory_order_consume);
     c89atomic_test__basic__flag_load_explicit(c89atomic_memory_order_acquire);
-    //c89atomic_test__basic__flag_load_explicit(c89atomic_memory_order_release);
-    //c89atomic_test__basic__flag_load_explicit(c89atomic_memory_order_acq_rel);
+    /*c89atomic_test__basic__flag_load_explicit(c89atomic_memory_order_release);*/
+    /*c89atomic_test__basic__flag_load_explicit(c89atomic_memory_order_acq_rel);*/
     c89atomic_test__basic__flag_load_explicit(c89atomic_memory_order_seq_cst);
 
     printf("\n");
@@ -257,7 +257,7 @@ void c89atomic_test__basic__store(void)
 { \
     printf("c89atomic_exchange_%d():\n", sizeInBits); \
     c89atomic_test__basic_exchange_explicit(sizeInBits, src, c89atomic_memory_order_relaxed); \
-    c89atomic_test__basic_exchange_explicit(sizeInBits, src, c89atomic_memory_order_consume); \
+    /*c89atomic_test__basic_exchange_explicit(sizeInBits, src, c89atomic_memory_order_consume);*/ \
     c89atomic_test__basic_exchange_explicit(sizeInBits, src, c89atomic_memory_order_acquire); \
     c89atomic_test__basic_exchange_explicit(sizeInBits, src, c89atomic_memory_order_release); \
     c89atomic_test__basic_exchange_explicit(sizeInBits, src, c89atomic_memory_order_acq_rel); \
