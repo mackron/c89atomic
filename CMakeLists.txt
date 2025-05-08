@@ -4,7 +4,7 @@ project(c89atomic VERSION 1.0)
 # Options
 option(C89ATOMIC_BUILD_EXAMPLES "Build c89atomic examples" OFF)
 option(C89ATOMIC_BUILD_TESTS    "Build c89atomic tests"    OFF)
-option(C89ATOMIC_BUILD_TESTS    "Build c89atomic tools"    OFF)
+option(C89ATOMIC_BUILD_TOOLS    "Build c89atomic tools"    OFF)
 option(C89ATOMIC_FORCE_CXX      "Force compilation as C++" OFF)
 option(C89ATOMIC_FORCE_C89      "Force compilation as C89" OFF)
 
