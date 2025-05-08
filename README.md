@@ -51,7 +51,7 @@ For practicality, this is not a drop-in replacement for C11's `stdatomic.h`. Bel
 between c89atomic and stdatomic.
 
   * All operations require an explicit size which is specified by the name of the function, and only 8-,
-    16-, 32- and 64-bit operations are supported. Objects of an arbitrary sizes are not supported.
+    16-, 32- and 64-bit operations are supported. Objects of arbitrary sizes are not supported.
   * All APIs are namespaced with `c89`.
   * `c89atomic_*` data types are undecorated (there is no `_Atomic` decoration).
 
