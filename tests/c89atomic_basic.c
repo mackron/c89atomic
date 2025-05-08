@@ -753,6 +753,20 @@ int main(int argc, char** argv)
         printf("PowerPC\n");
     #endif
 
+    printf("Code Path: ");
+    #if defined(C89ATOMIC_MODERN_GCC)
+        printf("GCC __atomic* intrinsics\n");
+    #elif defined(C89ATOMIC_LEGACY_GCC)
+        printf("GCC __sync* intrinsics\n");
+    #elif defined(C89ATOMIC_LEGACY_GCC_ASM)
+        printf("GCC inlined assembly\n");
+    #elif defined(C89ATOMIC_MODERN_MSVC)
+        printf("MSVC _Interlocked* intrinsics\n");
+    #elif defined(C89ATOMIC_LEGACY_MSVC)
+        printf("MSVC _Interlocked* intrinsics (no lock-free 8/16 bit)\n");
+    #elif defined(C89ATOMIC_LEGACY_MSVC_ASM)
+        printf("MSVC inlined assembly\n");
+    #endif
 
     if (g_ErrorCount > 0) {
         printf("\033[31m%d test(s) failed.\033[0m\n", g_ErrorCount);
