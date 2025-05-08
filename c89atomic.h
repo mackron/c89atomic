@@ -2272,35 +2272,116 @@ not represented here.
         /* Legacy GCC atomic built-ins. Everything is a full memory barrier. */
         #define c89atomic_thread_fence(order) __sync_synchronize(), (void)order
 
+
         /* compare_and_swap() */
-        #define c89atomic_compare_and_swap_8( dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
-        #define c89atomic_compare_and_swap_16(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
-        #define c89atomic_compare_and_swap_32(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
-        #define c89atomic_compare_and_swap_64(dst, expected, replacement)   __sync_val_compare_and_swap(dst, expected, replacement)
+        static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_compare_and_swap_8(volatile c89atomic_uint8* dst, c89atomic_uint8 expected, c89atomic_uint8 replacement)
+        {
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                return __sync_val_compare_and_swap(dst, expected, replacement);
+            }
+            #else
+            {
+                C89ATOMIC_COMPARE_AND_SWAP_LOCK(8, dst, expected, replacement);
+            }
+            #endif
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 replacement)
+        {
+            #if defined(C89ATOMIC_IS_LOCK_FREE_16)
+            {
+                return __sync_val_compare_and_swap(dst, expected, replacement);
+            }
+            #else
+            {
+                C89ATOMIC_COMPARE_AND_SWAP_LOCK(16, dst, expected, replacement);
+            }
+            #endif
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 replacement)
+        {
+            #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+            {
+                return __sync_val_compare_and_swap(dst, expected, replacement);
+            }
+            #else
+            {
+                C89ATOMIC_COMPARE_AND_SWAP_LOCK(32, dst, expected, replacement);
+            }
+            #endif
+        }
+
+        static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 replacement)
+        {
+            #if defined(C89ATOMIC_IS_LOCK_FREE_64)
+            {
+                return __sync_val_compare_and_swap(dst, expected, replacement);
+            }
+            #else
+            {
+                C89ATOMIC_COMPARE_AND_SWAP_LOCK(64, dst, expected, replacement);
+            }
+            #endif
+        }
+
 
         /* Atomic loads can be implemented in terms of a compare-and-swap. Need to implement as functions to silence warnings about `order` being unused. */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_load_explicit_8(volatile const c89atomic_uint8* ptr, c89atomic_memory_order order)
         {
-            (void)order;    /* Always using the strongest memory order. */
-            return c89atomic_compare_and_swap_8((c89atomic_uint8*)ptr, 0, 0);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                (void)order;    /* Always using the strongest memory order. */
+                return c89atomic_compare_and_swap_8((c89atomic_uint8*)ptr, 0, 0);
+            }
+            #else
+            {
+                C89ATOMIC_LOAD_EXPLICIT_LOCK(8, ptr, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_load_explicit_16(volatile const c89atomic_uint16* ptr, c89atomic_memory_order order)
         {
-            (void)order;    /* Always using the strongest memory order. */
-            return c89atomic_compare_and_swap_16((c89atomic_uint16*)ptr, 0, 0);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_16)
+            {
+                (void)order;    /* Always using the strongest memory order. */
+                return c89atomic_compare_and_swap_16((c89atomic_uint16*)ptr, 0, 0);
+            }
+            #else
+            {
+                C89ATOMIC_LOAD_EXPLICIT_LOCK(16, ptr, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_load_explicit_32(volatile const c89atomic_uint32* ptr, c89atomic_memory_order order)
         {
-            (void)order;    /* Always using the strongest memory order. */
-            return c89atomic_compare_and_swap_32((c89atomic_uint32*)ptr, 0, 0);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+            {
+                (void)order;    /* Always using the strongest memory order. */
+                return c89atomic_compare_and_swap_32((c89atomic_uint32*)ptr, 0, 0);
+            }
+            #else
+            {
+                C89ATOMIC_LOAD_EXPLICIT_LOCK(32, ptr, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_load_explicit_64(volatile const c89atomic_uint64* ptr, c89atomic_memory_order order)
         {
-            (void)order;    /* Always using the strongest memory order. */
-            return c89atomic_compare_and_swap_64((c89atomic_uint64*)ptr, 0, 0);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_64)
+            {
+                (void)order;    /* Always using the strongest memory order. */
+                return c89atomic_compare_and_swap_64((c89atomic_uint64*)ptr, 0, 0);
+            }
+            #else
+            {
+                C89ATOMIC_LOAD_EXPLICIT_LOCK(64, ptr, order);
+            }
+            #endif
         }
 
 
@@ -2308,38 +2389,70 @@ not represented here.
         /* exchange() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_exchange_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            if (order > c89atomic_memory_order_acquire) {
-                __sync_synchronize();
-            }
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                if (order > c89atomic_memory_order_acquire) {
+                    __sync_synchronize();
+                }
 
-            return __sync_lock_test_and_set(dst, src);
+                return __sync_lock_test_and_set(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_EXCHANGE_EXPLICIT_LOCK(8, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_exchange_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            if (order > c89atomic_memory_order_acquire) {
-                __sync_synchronize();
-            }
+            #if defined(C89ATOMIC_IS_LOCK_FREE_16)
+            {
+                if (order > c89atomic_memory_order_acquire) {
+                    __sync_synchronize();
+                }
 
-            return __sync_lock_test_and_set(dst, src);
+                return __sync_lock_test_and_set(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_EXCHANGE_EXPLICIT_LOCK(16, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_exchange_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            if (order > c89atomic_memory_order_acquire) {
-                __sync_synchronize();
-            }
+            #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+            {
+                if (order > c89atomic_memory_order_acquire) {
+                    __sync_synchronize();
+                }
 
-            return __sync_lock_test_and_set(dst, src);
+                return __sync_lock_test_and_set(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_EXCHANGE_EXPLICIT_LOCK(32, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_exchange_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            if (order > c89atomic_memory_order_acquire) {
-                __sync_synchronize();
-            }
+            #if defined(C89ATOMIC_IS_LOCK_FREE_64)
+            {
+                if (order > c89atomic_memory_order_acquire) {
+                    __sync_synchronize();
+                }
 
-            return __sync_lock_test_and_set(dst, src);
+                return __sync_lock_test_and_set(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_EXCHANGE_EXPLICIT_LOCK(64, dst, src, order);
+            }
+            #endif
         }
 
 
@@ -2353,130 +2466,290 @@ not represented here.
         /* fetch_add() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_add_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_add(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                (void)order;
+                return __sync_fetch_and_add(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_ADD_LOCK(8, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_add_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_add(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_16)
+            {
+                (void)order;
+                return __sync_fetch_and_add(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_ADD_LOCK(16, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_add_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_add(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+            {
+                (void)order;
+                return __sync_fetch_and_add(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_ADD_LOCK(32, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_add_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_add(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_64)
+            {
+                (void)order;
+                return __sync_fetch_and_add(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_ADD_LOCK(64, dst, src, order);
+            }
+            #endif
         }
 
 
         /* fetch_sub() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_sub_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_sub(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                (void)order;
+                return __sync_fetch_and_sub(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_ADD_LOCK(8, dst, (c89atomic_uint8)(-(c89atomic_int8)src), order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_sub_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_sub(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_16)
+            {
+                (void)order;
+                return __sync_fetch_and_sub(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_ADD_LOCK(16, dst, (c89atomic_uint16)(-(c89atomic_int16)src), order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_sub_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_sub(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+            {
+                (void)order;
+                return __sync_fetch_and_sub(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_ADD_LOCK(32, dst, (c89atomic_uint32)(-(c89atomic_int32)src), order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_sub_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_sub(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_64)
+            {
+                (void)order;
+                return __sync_fetch_and_sub(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_ADD_LOCK(64, dst, (c89atomic_uint64)(-(c89atomic_int64)src), order);
+            }
+            #endif
         }
 
 
         /* fetch_and() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_and_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_and(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                (void)order;
+                return __sync_fetch_and_and(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_AND_LOCK(8, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_and_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_and(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_16)
+            {
+                (void)order;
+                return __sync_fetch_and_and(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_AND_LOCK(16, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_and_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_and(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+            {
+                (void)order;
+                return __sync_fetch_and_and(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_AND_LOCK(32, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_and_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_and(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_64)
+            {
+                (void)order;
+                return __sync_fetch_and_and(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_AND_LOCK(64, dst, src, order);
+            }
+            #endif
         }
 
 
         /* fetch_or() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_or_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_or(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                (void)order;
+                return __sync_fetch_and_or(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_OR_LOCK(8, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_or_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_or(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_16)
+            {
+                (void)order;
+                return __sync_fetch_and_or(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_OR_LOCK(16, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_or_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_or(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+            {
+                (void)order;
+                return __sync_fetch_and_or(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_OR_LOCK(32, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_or_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_or(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                (void)order;
+                return __sync_fetch_and_or(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_OR_LOCK(64, dst, src, order);
+            }
+            #endif
         }
 
 
         /* fetch_xor() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_xor_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_xor(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            {
+                (void)order;
+                return __sync_fetch_and_xor(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_XOR_LOCK(8, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_xor_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_xor(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_16)
+            {
+                (void)order;
+                return __sync_fetch_and_xor(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_XOR_LOCK(16, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_xor_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_xor(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+            {
+                (void)order;
+                return __sync_fetch_and_xor(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_XOR_LOCK(32, dst, src, order);
+            }
+            #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_xor_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            (void)order;
-            return __sync_fetch_and_xor(dst, src);
+            #if defined(C89ATOMIC_IS_LOCK_FREE_64)
+            {
+                (void)order;
+                return __sync_fetch_and_xor(dst, src);
+            }
+            #else
+            {
+                C89ATOMIC_FETCH_XOR_LOCK(64, dst, src, order);
+            }
+            #endif
         }
     #elif defined(C89ATOMIC_LEGACY_GCC_ASM)
         /* Old GCC, or non-GCC compilers supporting GCC-style inlined assembly. The inlined assembly below uses Gas syntax. */
