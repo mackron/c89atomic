@@ -249,18 +249,21 @@ typedef unsigned char           c89atomic_bool;
 #endif
 #endif
 
-#if defined(__arm__) || defined(_M_ARM)
-#define C89ATOMIC_ARM32
-#endif
-#if defined(__arm64) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
-#define C89ATOMIC_ARM64
-#endif
-
 #if defined(__x86_64__) || defined(_M_X64)
 #define C89ATOMIC_X64
 #elif defined(__i386) || defined(_M_IX86) || defined(__i386__)
 #define C89ATOMIC_X86
-#elif defined(C89ATOMIC_ARM32) || defined(C89ATOMIC_ARM64)
+#elif defined(__arm64) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64)
+#define C89ATOMIC_ARM64
+#elif defined(__arm__) || defined(_M_ARM)
+#define C89ATOMIC_ARM32
+#elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) || defined(_ARCH_PPC64)
+#define C89ATOMIC_PPC64
+#elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) || defined(__powerpc) || defined(__ppc) || defined(_ARCH_PPC)
+#define C89ATOMIC_PPC32
+#endif
+
+#if defined(C89ATOMIC_ARM32) || defined(C89ATOMIC_ARM64)
 #define C89ATOMIC_ARM
 #endif
 /* End Architecture Detection */
