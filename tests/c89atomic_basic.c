@@ -663,7 +663,7 @@ int main(int argc, char** argv)
     #if defined(__clang__)
         printf("Clang %d.%d\n", __clang_major__, __clang_minor__);
     #elif defined(__GNUC__)
-        printf("GCC %d.%d\n", __GNUC_MAJOR__, __GNUC_MINOR__);
+        printf("GCC %d.%d\n", __GNUC__, __GNUC_MINOR__);
     #elif defined(_MSC_VER)
         printf("MSVC %d\n", _MSC_VER);
     #elif defined(__TINYC__)
