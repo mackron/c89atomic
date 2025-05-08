@@ -746,6 +746,24 @@ not represented here.
         /* Atomics cannot be lock-free on i386 because it lacks CMPXCHG. */
     #endif
 
+    #if defined(C89ATOMIC_ARM32) || defined(C89ATOMIC_ARM64)
+        #define C89ATOMIC_IS_LOCK_FREE_8  1
+        #define C89ATOMIC_IS_LOCK_FREE_16 1
+        #define C89ATOMIC_IS_LOCK_FREE_32 1
+        #if defined(C89ATOMIC_ARM64) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7R__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__)
+            #define C89ATOMIC_IS_LOCK_FREE_64 1
+        #endif
+    #endif
+
+    #if defined(C89ATOMIC_PPC32) || defined(C89ATOMIC_PPC64)
+        #define C89ATOMIC_IS_LOCK_FREE_8  1
+        #define C89ATOMIC_IS_LOCK_FREE_16 1
+        #define C89ATOMIC_IS_LOCK_FREE_32 1
+        #if defined(C89ATOMIC_PPC64)
+            #define C89ATOMIC_IS_LOCK_FREE_64 1
+        #endif
+    #endif
+
     static C89ATOMIC_INLINE c89atomic_bool c89atomic_is_lock_free_8(volatile void* ptr)
     {
         (void)ptr;
