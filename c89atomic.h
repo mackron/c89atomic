@@ -2589,7 +2589,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_AND_LOCK(8, dst, src, order);
+                C89ATOMIC_FETCH_AND_CAS(8, dst, src, order);
             }
             #endif
         }
@@ -2603,7 +2603,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_AND_LOCK(16, dst, src, order);
+                C89ATOMIC_FETCH_AND_CAS(16, dst, src, order);
             }
             #endif
         }
@@ -2617,7 +2617,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_AND_LOCK(32, dst, src, order);
+                C89ATOMIC_FETCH_AND_CAS(32, dst, src, order);
             }
             #endif
         }
@@ -2631,7 +2631,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_AND_LOCK(64, dst, src, order);
+                C89ATOMIC_FETCH_AND_CAS(64, dst, src, order);
             }
             #endif
         }
@@ -2647,7 +2647,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_OR_LOCK(8, dst, src, order);
+                C89ATOMIC_FETCH_OR_CAS(8, dst, src, order);
             }
             #endif
         }
@@ -2661,7 +2661,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_OR_LOCK(16, dst, src, order);
+                C89ATOMIC_FETCH_OR_CAS(16, dst, src, order);
             }
             #endif
         }
@@ -2675,21 +2675,21 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_OR_LOCK(32, dst, src, order);
+                C89ATOMIC_FETCH_OR_CAS(32, dst, src, order);
             }
             #endif
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_or_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            #if defined(C89ATOMIC_IS_LOCK_FREE_8)
+            #if defined(C89ATOMIC_IS_LOCK_FREE_64)
             {
                 (void)order;
                 return __sync_fetch_and_or(dst, src);
             }
             #else
             {
-                C89ATOMIC_FETCH_OR_LOCK(64, dst, src, order);
+                C89ATOMIC_FETCH_OR_CAS(64, dst, src, order);
             }
             #endif
         }
@@ -2705,7 +2705,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_XOR_LOCK(8, dst, src, order);
+                C89ATOMIC_FETCH_XOR_CAS(8, dst, src, order);
             }
             #endif
         }
@@ -2719,7 +2719,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_XOR_LOCK(16, dst, src, order);
+                C89ATOMIC_FETCH_XOR_CAS(16, dst, src, order);
             }
             #endif
         }
@@ -2733,7 +2733,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_XOR_LOCK(32, dst, src, order);
+                C89ATOMIC_FETCH_XOR_CAS(32, dst, src, order);
             }
             #endif
         }
@@ -2747,7 +2747,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_XOR_LOCK(64, dst, src, order);
+                C89ATOMIC_FETCH_XOR_CAS(64, dst, src, order);
             }
             #endif
         }
