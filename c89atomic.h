@@ -773,8 +773,7 @@ not represented here.
         __sync* intrinsics are just wrappers around __atomic* and should therefore not have the error.
         */
         #if (defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7))) && !defined(__clang__)
-            #define C89ATOMIC_IS_LOCK_FREE_8  0
-            #define C89ATOMIC_IS_LOCK_FREE_16 0
+            /* Old GCC. Use a spinlock for 8 and 16-bit atomics. */
         #else
             #define C89ATOMIC_IS_LOCK_FREE_8  1
             #define C89ATOMIC_IS_LOCK_FREE_16 1
