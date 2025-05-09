@@ -12,6 +12,14 @@ Tests basic logic of all atomic functions. Does not test atomicity.
 //#define C89ATOMIC_LEGACY_MSVC_ASM
 #include "../c89atomic.c"
 
+#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wlong-long"
+    #if defined(__clang__)
+        #pragma GCC diagnostic ignored "-Wc++11-long-long"
+    #endif
+#endif
+
 #if defined(_MSC_VER) || defined(__BORLANDC__)
     #define C89ATOMIC_ULL(x) (c89atomic_uint64)(x##i64)
 #else
@@ -776,3 +784,7 @@ int main(int argc, char** argv)
         return 0;
     }
 }
+
+#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
+    #pragma GCC diagnostic pop /* -Wlong-long */
+#endif
