@@ -40,7 +40,7 @@ endif()
 
 # Warnings
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    list(APPEND COMPILE_OPTIONS -Wall -Wextra -Wpedantic)
+    list(APPEND COMPILE_OPTIONS -Wall -Wextra -pedantic)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     #list(APPEND COMPILE_OPTIONS /W4)
 endif()
