@@ -300,6 +300,7 @@ typedef c89atomic_uint32        c89atomic_bool;
 /* End Inline */
 
 
+/* BEG c89atomic_codepath.h */
 /*
 Here is where we need to determine the code path we're going to take. This can get complicated
 due to the myriad of different compiler versions and available APIs.
@@ -344,8 +345,9 @@ existing code paths are appropriate, you'll need to add a new code path and impl
         #endif
     #endif
 #endif
+/* END c89atomic_codepath.h */
 
-
+/* BEG c89atomic_flag.h */
 /*
 This section implements the c89atomic_flag type and the following functions:
 
@@ -698,7 +700,9 @@ These functions are mandatory. If they cannot be implemented a compile time erro
 
 #define c89atomic_flag_test_and_set(dst) c89atomic_flag_test_and_set_explicit(dst, c89atomic_memory_order_acquire)
 #define c89atomic_flag_clear(dst)        c89atomic_flag_clear_explicit(dst, c89atomic_memory_order_release)
+/* END c89atomic_flag.h */
 
+/* BEG c89atomic_spinlock.h */
 /*
 At this point we should have our c89atomic_flag type. We can now define our spinlock. With this
 spinlock, any architecture will be able to implement a full API set.
@@ -722,6 +726,7 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlo
 {
     c89atomic_flag_clear_explicit(pSpinlock, c89atomic_memory_order_release);
 }
+/* END c89atomic_spinlock.h */
 
 extern c89atomic_spinlock c89atomic_global_lock;
 
