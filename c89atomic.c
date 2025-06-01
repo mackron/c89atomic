@@ -9,6 +9,8 @@ this file in your project.
 
 #include "c89atomic.h"
 
+/* BEG c89atomic_global_lock.c */
 c89atomic_spinlock c89atomic_global_lock = 0;
+/* END c89atomic_global_lock.c */
 
 #endif /* c89atomic_h*/

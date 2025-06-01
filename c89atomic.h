@@ -728,10 +728,12 @@ static C89ATOMIC_INLINE void c89atomic_spinlock_unlock(volatile c89atomic_spinlo
 }
 /* END c89atomic_spinlock.h */
 
+/* BEG c89atomic_global_lock.h */
 extern c89atomic_spinlock c89atomic_global_lock;
+/* END c89atomic_global_lock.h */
 
 
-
+/* BEG c89atomic_main.h */
 /*
 We define our c89atomic_is_lock_free functions here where applicable because there's a non-trivial
 logic in determining whether or not things are lock-free on a given architecture. I'd rather do this
@@ -3482,7 +3484,6 @@ not represented here.
 #endif
 
 
-
 /*
 Everything below this point is stuff that is implemented in terms of the functions defined above.
 */
@@ -3558,8 +3559,9 @@ Everything below this point is stuff that is implemented in terms of the functio
     #define c89atomic_compare_exchange_weak_explicit_32(dst, expected, replacement, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_32(dst, expected, replacement, successOrder, failureOrder)
     #define c89atomic_compare_exchange_weak_explicit_64(dst, expected, replacement, successOrder, failureOrder) c89atomic_compare_exchange_strong_explicit_64(dst, expected, replacement, successOrder, failureOrder)
 #endif  /* C89ATOMIC_HAS_NATIVE_COMPARE_EXCHANGE */
+/* END c89atomic_main.h */
 
-
+/* BEG c89atomic_ptr.h */
 /*
 Pointer versions of relevant operations. Note that some functions cannot be implemented as #defines because for some reason, some compilers
 complain with a warning if you don't use the return value. I'm not fully sure why this happens, but to work around this, those particular
@@ -3639,15 +3641,15 @@ functions are just implemented as inlined functions.
     #error Unsupported architecture.
 #endif
 
-
 /* Implicit Pointer. */
 #define c89atomic_store_ptr(dst, src)                                       c89atomic_store_explicit_ptr((volatile void**)dst, (void*)src, c89atomic_memory_order_seq_cst)
 #define c89atomic_load_ptr(ptr)                                             c89atomic_load_explicit_ptr((volatile void**)ptr, c89atomic_memory_order_seq_cst)
 #define c89atomic_exchange_ptr(dst, src)                                    c89atomic_exchange_explicit_ptr((volatile void**)dst, (void*)src, c89atomic_memory_order_seq_cst)
 #define c89atomic_compare_exchange_strong_ptr(dst, expected, replacement)   c89atomic_compare_exchange_strong_explicit_ptr((volatile void**)dst, (void**)expected, (void*)replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
 #define c89atomic_compare_exchange_weak_ptr(dst, expected, replacement)     c89atomic_compare_exchange_weak_explicit_ptr((volatile void**)dst, (void**)expected, (void*)replacement, c89atomic_memory_order_seq_cst, c89atomic_memory_order_seq_cst)
+/* END c89atomic_ptr.h */
 
-
+/* BEG c89atomic_unsigned.h */
 /* Implicit Unsigned Integer. */
 #define c89atomic_store_8( dst, src)                                    c89atomic_store_explicit_8( dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_store_16(dst, src)                                    c89atomic_store_explicit_16(dst, src, c89atomic_memory_order_seq_cst)
@@ -3698,8 +3700,10 @@ functions are just implemented as inlined functions.
 #define c89atomic_fetch_and_16(dst, src)                                c89atomic_fetch_and_explicit_16(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_fetch_and_32(dst, src)                                c89atomic_fetch_and_explicit_32(dst, src, c89atomic_memory_order_seq_cst)
 #define c89atomic_fetch_and_64(dst, src)                                c89atomic_fetch_and_explicit_64(dst, src, c89atomic_memory_order_seq_cst)
+/* END c89atomic_unsigned.h */
 
 
+/* BEG c89atomic_signed.h */
 /* Explicit Signed Integer. */
 #define c89atomic_store_explicit_i8( dst, src, order)                   c89atomic_store_explicit_8( (c89atomic_uint8* )dst, (c89atomic_uint8 )src, order)
 #define c89atomic_store_explicit_i16(dst, src, order)                   c89atomic_store_explicit_16((c89atomic_uint16*)dst, (c89atomic_uint16)src, order)
@@ -3807,8 +3811,10 @@ functions are just implemented as inlined functions.
 #define c89atomic_compare_and_swap_i16(dst, expected, dedsired)         (c89atomic_int16)c89atomic_compare_and_swap_16((c89atomic_uint16*)dst, (c89atomic_uint16)expected, (c89atomic_uint16)dedsired)
 #define c89atomic_compare_and_swap_i32(dst, expected, dedsired)         (c89atomic_int32)c89atomic_compare_and_swap_32((c89atomic_uint32*)dst, (c89atomic_uint32)expected, (c89atomic_uint32)dedsired)
 #define c89atomic_compare_and_swap_i64(dst, expected, dedsired)         (c89atomic_int64)c89atomic_compare_and_swap_64((c89atomic_uint64*)dst, (c89atomic_uint64)expected, (c89atomic_uint64)dedsired)
+/* END c89atomic_signed.h */
 
 
+/* BEG c89atomic_float.h */
 /* Floating Point Explicit. */
 typedef union
 {
@@ -4053,7 +4059,7 @@ static C89ATOMIC_INLINE double c89atomic_compare_and_swap_f64(volatile double* d
     r.i = c89atomic_compare_and_swap_64((volatile c89atomic_uint64*)dst, e.i, d.i);
     return r.f;
 }
-
+/* END c89atomic_float.h */
 
 
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
