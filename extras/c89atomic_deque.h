@@ -47,8 +47,8 @@ typedef enum
 /* BEG c89atomic_deque.h */
 typedef struct c89atomic_deque
 {
-    c89atomic_uint32  head;
-    c89atomic_uint32  tail;
+    c89atomic_uint32 head;
+    c89atomic_uint32 tail;
     C89ATOMIC_DEQUE_T buffer[C89ATOMIC_DEQUE_CAP];
 } c89atomic_deque;
 
