@@ -12,6 +12,8 @@ Tests basic logic of all atomic functions. Does not test atomicity.
 //#define C89ATOMIC_LEGACY_MSVC_ASM
 #include "../c89atomic.c"
 
+#include "../extras/c89atomic_deque.c"
+
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wlong-long"
@@ -693,6 +695,110 @@ int main(int argc, char** argv)
         res = c89atomic_load_f64(&dst);
         (void)res;
     }
+
+
+    /* Basic deque tests. Not currently testing for multi-threaded correctness. */
+    {
+        c89atomic_deque_result result;
+        c89atomic_deque deque;
+        void* pValue = (void*)123456;
+
+        c89atomic_deque_init(&deque);
+
+        /* First thing to test is to take from the tail while the deque is empty. Want to test for wrap around bugs due to 1 being subtracted from 0. */
+        printf("\n");
+        printf("Deque Take Tail (Empty): ");
+        result = c89atomic_deque_take_tail(&deque, &pValue);
+        if (result == C89ATOMIC_DEQUE_NO_DATA_AVAILABLE) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+
+        printf("Deque Take Head (Empty): ");
+        result = c89atomic_deque_take_head(&deque, &pValue);
+        if (result == C89ATOMIC_DEQUE_NO_DATA_AVAILABLE) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+
+        printf("Deque Push Tail:         ");
+        result = c89atomic_deque_push_tail(&deque, (void*)1);
+        if (result == C89ATOMIC_DEQUE_SUCCESS) {
+            result = c89atomic_deque_push_tail(&deque, (void*)2);
+            if (result == C89ATOMIC_DEQUE_SUCCESS) {
+                result = c89atomic_deque_push_tail(&deque, (void*)3);
+                if (result == C89ATOMIC_DEQUE_SUCCESS) {
+                    c89atomic_test_passed();
+                } else {
+                    c89atomic_test_failed();
+                }
+            } else {
+                c89atomic_test_failed();
+            }
+        } else {
+            c89atomic_test_failed();
+        }
+        
+
+        /* Take from the tail. Expecting "3". */
+        printf("Deque Take Tail:         ");
+        result = c89atomic_deque_take_tail(&deque, &pValue);
+        if (result == C89ATOMIC_DEQUE_SUCCESS && pValue == (void*)3) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+
+        /* Steal from the head. Expecting "1". */
+        printf("Deque Take Head:         ");
+        result = c89atomic_deque_take_head(&deque, &pValue);
+        if (result == C89ATOMIC_DEQUE_SUCCESS && pValue == (void*)1) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+
+        /* Take last item. */
+        printf("Deque Take Tail (Last):  ");
+        result = c89atomic_deque_take_tail(&deque, &pValue);
+        if (result == C89ATOMIC_DEQUE_SUCCESS && pValue == (void*)2) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+
+        /* Now the deque should be empty. */
+        printf("Deque Empty:             ");
+        if (deque.head == deque.tail) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+
+        /* Now we're going to take the last item from the head. We'll need to push a fresh item. */
+        printf("Deque Take Head (Last):  ");
+        result = c89atomic_deque_push_tail(&deque, (void*)4);
+        if (result == C89ATOMIC_DEQUE_SUCCESS) {
+            result = c89atomic_deque_take_head(&deque, &pValue);
+            if (result == C89ATOMIC_DEQUE_SUCCESS && pValue == (void*)4) {
+                c89atomic_test_passed();
+            } else {
+                c89atomic_test_failed();
+            }
+        } else {
+            c89atomic_test_failed();
+        }
+
+        printf("Deque Empty:             ");
+        if (deque.head == deque.tail) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+    }
+
 
     (void)argc;
     (void)argv;
