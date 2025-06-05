@@ -3,8 +3,6 @@
 
 #include "c89atomic_deque.h"
 
-#define c89atomic_deque_can_steal(x) (1)
-
 /* BEG c89atomic_deque.c */
 C89ATOMIC_DEQUE_API void c89atomic_deque_init(c89atomic_deque* pDeque)
 {
@@ -97,10 +95,6 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_head(c89atomic_d
         C89ATOMIC_DEQUE_T x;
 
         x = c89atomic_load_explicit_ptr((volatile void**)&pDeque->buffer[head & (C89ATOMIC_DEQUE_CAP - 1)], c89atomic_memory_order_relaxed);
-        if (!c89atomic_deque_can_steal(x)) {
-            return C89ATOMIC_DEQUE_CANCELLED;   /* Item is not stealable. */
-        }
-
         if (!c89atomic_compare_exchange_strong_explicit_32(&pDeque->head, &head, head + 1, c89atomic_memory_order_seq_cst, c89atomic_memory_order_relaxed)) {
             return C89ATOMIC_DEQUE_CANCELLED;   /* Failed race.  */
         }
