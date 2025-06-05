@@ -13,6 +13,7 @@ Tests basic logic of all atomic functions. Does not test atomicity.
 #include "../c89atomic.c"
 
 #include "../extras/c89atomic_deque.c"
+#include "../extras/c89atomic_bitmap_allocator.c"
 
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
     #pragma GCC diagnostic push
@@ -793,6 +794,57 @@ int main(int argc, char** argv)
 
         printf("Deque Empty:             ");
         if (deque.head == deque.tail) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+    }
+
+
+    /* Basic bitmap allocator test. */
+    {
+        c89atomic_bitmap_allocator_result result;
+        c89atomic_uint32 bitmap[2];
+        c89atomic_bitmap_allocator allocator;
+        size_t i = 0;
+        size_t allocIndex = 1234;
+        c89atomic_bool success = 1;
+
+        c89atomic_bitmap_allocator_init(bitmap, sizeof(bitmap) * 8, &allocator);
+
+        printf("\n");
+        printf("Bitmap Allocator Alloc:  ");
+        for (i = 0; i < sizeof(bitmap) * 8; i += 1) {
+            result = c89atomic_bitmap_allocator_alloc(&allocator, &allocIndex);
+            if (result != C89ATOMIC_BITMAP_ALLOCATOR_SUCCESS) {
+                c89atomic_test_failed();
+                success = 0;
+                break;
+            }
+
+            if (allocIndex != i) {
+                c89atomic_test_failed();
+                success = 0;
+                break;
+            }
+        }
+
+        if (success) {
+            c89atomic_test_passed();
+        }
+
+        printf("Bitmap Allocator No Mem: ");
+        result = c89atomic_bitmap_allocator_alloc(&allocator, &allocIndex);
+        if (result == C89ATOMIC_BITMAP_ALLOCATOR_OUT_OF_MEMORY) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+
+        printf("Bitmap Allocator Free:   ");
+        c89atomic_bitmap_allocator_free(&allocator, 34);
+        result = c89atomic_bitmap_allocator_alloc(&allocator, &allocIndex);
+        if (result == C89ATOMIC_BITMAP_ALLOCATOR_SUCCESS && allocIndex == 34) {
             c89atomic_test_passed();
         } else {
             c89atomic_test_failed();
