@@ -1,0 +1,281 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # Linux job
+  linux:
+    name: Linux (${{ matrix.compiler }}, ${{ matrix.config.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        config:
+          - name: "Default"
+            cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Force C++"
+            cmake_args: "-DC89ATOMIC_FORCE_CXX=ON -DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Force C89"
+            cmake_args: "-DC89ATOMIC_FORCE_C89=ON -DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Modern GCC"
+            cmake_args: "-DC89ATOMIC_MODERN_GCC=ON -DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Legacy GCC"
+            cmake_args: "-DC89ATOMIC_LEGACY_GCC=ON -DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Legacy GCC ASM"
+            cmake_args: "-DC89ATOMIC_LEGACY_GCC_ASM=ON -DC89ATOMIC_BUILD_TESTS=ON"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake
+
+      - name: Setup compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            sudo apt-get install -y clang
+            echo "CC=clang" >> $GITHUB_ENV
+            echo "CXX=clang++" >> $GITHUB_ENV
+          else
+            echo "CC=gcc" >> $GITHUB_ENV
+            echo "CXX=g++" >> $GITHUB_ENV
+          fi
+
+      - name: Configure CMake
+        run: cmake -B build ${{ matrix.config.cmake_args }}
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Run tests
+        run: cd build && ctest --output-on-failure --parallel $(nproc)
+
+  # Windows job
+  windows:
+    name: Windows (${{ matrix.compiler }}${{ matrix.arch && format(' {0}', matrix.arch) || '' }}, ${{ matrix.config.name }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # MinGW builds (default architecture)
+          - compiler: mingw
+            config: {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: mingw
+            config: {name: "Force C++", cmake_args: "-DC89ATOMIC_FORCE_CXX=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: mingw
+            config: {name: "Modern GCC", cmake_args: "-DC89ATOMIC_MODERN_GCC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: mingw
+            config: {name: "Legacy GCC", cmake_args: "-DC89ATOMIC_LEGACY_GCC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: mingw
+            config: {name: "Legacy GCC ASM", cmake_args: "-DC89ATOMIC_LEGACY_GCC_ASM=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          
+          # MSVC x86 builds (32-bit)
+          - compiler: msvc
+            arch: x86
+            config: {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: x86
+            config: {name: "Force C++", cmake_args: "-DC89ATOMIC_FORCE_CXX=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: x86
+            config: {name: "Modern MSVC", cmake_args: "-DC89ATOMIC_MODERN_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: x86
+            config: {name: "Legacy MSVC", cmake_args: "-DC89ATOMIC_LEGACY_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: x86
+            config: {name: "Legacy MSVC ASM", cmake_args: "-DC89ATOMIC_LEGACY_MSVC_ASM=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          
+          # MSVC x64 builds (64-bit) - no ASM path
+          - compiler: msvc
+            arch: x64
+            config: {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: x64
+            config: {name: "Force C++", cmake_args: "-DC89ATOMIC_FORCE_CXX=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: x64
+            config: {name: "Modern MSVC", cmake_args: "-DC89ATOMIC_MODERN_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: x64
+            config: {name: "Legacy MSVC", cmake_args: "-DC89ATOMIC_LEGACY_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        if: matrix.compiler == 'msvc'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch || 'x64' }}
+
+      - name: Setup MinGW
+        if: matrix.compiler == 'mingw'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+
+      - name: Configure CMake (MSVC)
+        if: matrix.compiler == 'msvc'
+        run: cmake -B build -A ${{ matrix.arch == 'x86' && 'Win32' || 'x64' }} ${{ matrix.config.cmake_args }}
+
+      - name: Configure CMake (MinGW)
+        if: matrix.compiler == 'mingw'
+        shell: msys2 {0}
+        run: cmake -B build -G "MinGW Makefiles" ${{ matrix.config.cmake_args }}
+
+      - name: Build (MSVC)
+        if: matrix.compiler == 'msvc'
+        run: cmake --build build --parallel
+
+      - name: Build (MinGW)
+        if: matrix.compiler == 'mingw'
+        shell: msys2 {0}
+        run: cmake --build build --parallel
+
+      - name: Run tests (MSVC)
+        if: matrix.compiler == 'msvc'
+        run: cd build && ctest --output-on-failure --parallel -C Debug
+
+      - name: Run tests (MinGW)
+        if: matrix.compiler == 'mingw'
+        shell: msys2 {0}
+        run: cd build && ctest --output-on-failure --parallel
+
+  # macOS job
+  macos:
+    name: macOS (${{ matrix.config.name }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "Default"
+            cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Force C++"
+            cmake_args: "-DC89ATOMIC_FORCE_CXX=ON -DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Force C89"
+            cmake_args: "-DC89ATOMIC_FORCE_C89=ON -DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Modern GCC"
+            cmake_args: "-DC89ATOMIC_MODERN_GCC=ON -DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Legacy GCC"
+            cmake_args: "-DC89ATOMIC_LEGACY_GCC=ON -DC89ATOMIC_BUILD_TESTS=ON"
+          - name: "Legacy GCC ASM"
+            cmake_args: "-DC89ATOMIC_LEGACY_GCC_ASM=ON -DC89ATOMIC_BUILD_TESTS=ON"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -B build ${{ matrix.config.cmake_args }}
+
+      - name: Build
+        run: cmake --build build --parallel $(sysctl -n hw.ncpu)
+
+      - name: Run tests
+        run: cd build && ctest --output-on-failure --parallel $(sysctl -n hw.ncpu)
+
+  # Android job
+  android:
+    name: Android (${{ matrix.arch }}, ${{ matrix.config.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64-v8a, armeabi-v7a, x86_64]
+        config:
+          - name: "Default"
+            cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+      - name: Configure CMake
+        run: |
+          TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake
+          cmake -B build \
+            -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
+            -DANDROID_ABI=${{ matrix.arch }} \
+            -DANDROID_PLATFORM=android-21 \
+            ${{ matrix.config.cmake_args }}
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+  # FreeBSD job
+  freebsd:
+    name: FreeBSD (${{ matrix.config.name }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test on FreeBSD
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            pkg install -y cmake
+          run: |
+            cmake -B build ${{ matrix.config.cmake_args }}
+            cmake --build build --parallel $(sysctl -n hw.ncpu)
+            cd build && ctest --output-on-failure --parallel $(sysctl -n hw.ncpu)
+
+  # OpenBSD job
+  openbsd:
+    name: OpenBSD (${{ matrix.config.name }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            pkg_add cmake
+          run: |
+            cmake -B build ${{ matrix.config.cmake_args }}
+            cmake --build build --parallel $(sysctl -n hw.ncpu)
+            cd build && ctest --output-on-failure --parallel $(sysctl -n hw.ncpu)
+
+  # NetBSD job
+  netbsd:
+    name: NetBSD (${{ matrix.config.name }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test on NetBSD
+        uses: vmactions/netbsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            /usr/sbin/pkg_add cmake
+          run: |
+            cmake -B build ${{ matrix.config.cmake_args }}
+            cmake --build build
+            cd build && ctest --output-on-failure
