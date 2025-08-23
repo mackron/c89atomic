@@ -169,8 +169,11 @@ jobs:
             cmake_args: "-DC89ATOMIC_MODERN_GCC=ON -DC89ATOMIC_BUILD_TESTS=ON"
           - name: "Legacy GCC"
             cmake_args: "-DC89ATOMIC_LEGACY_GCC=ON -DC89ATOMIC_BUILD_TESTS=ON"
-          - name: "Legacy GCC ASM"
-            cmake_args: "-DC89ATOMIC_LEGACY_GCC_ASM=ON -DC89ATOMIC_BUILD_TESTS=ON"
+        
+          # The macos runner might use ARM, but c89atomic does not have an inlined assembly
+          # implementation for that. We'll need to disable the ASM path in this case.
+          #- name: "Legacy GCC ASM"
+          #  cmake_args: "-DC89ATOMIC_LEGACY_GCC_ASM=ON -DC89ATOMIC_BUILD_TESTS=ON"
     steps:
       - uses: actions/checkout@v4
 
