@@ -2,11 +2,17 @@ cmake_minimum_required(VERSION 3.14)
 project(c89atomic VERSION 1.0)
 
 # Options
-option(C89ATOMIC_BUILD_EXAMPLES "Build c89atomic examples" OFF)
-option(C89ATOMIC_BUILD_TESTS    "Build c89atomic tests"    OFF)
-option(C89ATOMIC_BUILD_TOOLS    "Build c89atomic tools"    OFF)
-option(C89ATOMIC_FORCE_CXX      "Force compilation as C++" OFF)
-option(C89ATOMIC_FORCE_C89      "Force compilation as C89" OFF)
+option(C89ATOMIC_BUILD_EXAMPLES  "Build c89atomic examples"            OFF)
+option(C89ATOMIC_BUILD_TESTS     "Build c89atomic tests"               OFF)
+option(C89ATOMIC_BUILD_TOOLS     "Build c89atomic tools"               OFF)
+option(C89ATOMIC_FORCE_CXX       "Force compilation as C++"            OFF)
+option(C89ATOMIC_FORCE_C89       "Force compilation as C89"            OFF)
+option(C89ATOMIC_MODERN_GCC      "Force the modern GCC code path"      OFF)
+option(C89ATOMIC_LEGACY_GCC      "Force the legacy GCC code path"      OFF)
+option(C89ATOMIC_LEGACY_GCC_ASM  "Force the legacy GCC ASM code path"  OFF)
+option(C89ATOMIC_MODERN_MSVC     "Force the modern MSVC code path"     OFF)
+option(C89ATOMIC_LEGACY_MSVC     "Force the legacy MSVC code path"     OFF)
+option(C89ATOMIC_LEGACY_MSVC_ASM "Force the legacy MSVC ASM code path" OFF)
 
 # Construct compiler options.
 set(COMPILE_OPTIONS)
@@ -46,8 +52,39 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 
+# Some options are incompatible depending on the compiler.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(C89ATOMIC_MODERN_MSVC     OFF)
+    set(C89ATOMIC_LEGACY_MSVC     OFF)
+    set(C89ATOMIC_LEGACY_MSVC_ASM OFF)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(C89ATOMIC_MODERN_GCC      OFF)
+    set(C89ATOMIC_LEGACY_GCC      OFF)
+    set(C89ATOMIC_LEGACY_GCC_ASM  OFF)
+endif()
+
+
 # Construct compiler defines
 set(COMPILE_DEFINES)
+
+if(C89ATOMIC_MODERN_GCC)
+    list(APPEND COMPILE_DEFINES C89ATOMIC_MODERN_GCC)
+endif()
+if(C89ATOMIC_LEGACY_GCC)
+    list(APPEND COMPILE_DEFINES C89ATOMIC_LEGACY_GCC)
+endif()
+if(C89ATOMIC_LEGACY_GCC_ASM)
+    list(APPEND COMPILE_DEFINES C89ATOMIC_LEGACY_GCC_ASM)
+endif()
+if(C89ATOMIC_MODERN_MSVC)
+    list(APPEND COMPILE_DEFINES C89ATOMIC_MODERN_MSVC)
+endif()
+if(C89ATOMIC_LEGACY_MSVC)
+    list(APPEND COMPILE_DEFINES C89ATOMIC_LEGACY_MSVC)
+endif()
+if(C89ATOMIC_LEGACY_MSVC_ASM)
+    list(APPEND COMPILE_DEFINES C89ATOMIC_LEGACY_MSVC_ASM)
+endif()
 
 
 # Link libraries
