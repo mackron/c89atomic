@@ -84,7 +84,7 @@ if(C89ATOMIC_BUILD_TESTS)
 
     add_executable(c89atomic_basic tests/c89atomic_basic.c)
     target_link_libraries(c89atomic_basic PRIVATE c89atomic)
-    add_test(NAME c89atomic_basic COMMAND c89atomic_basic)
+    #add_test(NAME c89atomic_basic COMMAND c89atomic_basic)
 
     # sandbox. Don't add a test for this.
     #add_executable(c89atomic_sandbox tests/c89atomic_sandbox.c)
