@@ -51,15 +51,20 @@ set(COMPILE_DEFINES)
 
 
 # Link libraries
-set(COMMON_LIBRARIES)
-set(COMMON_INCLUDE_DIRS)
+set(COMMON_LINK_LIBRARIES)
+
+if (UNIX)
+    find_library(LIB_ATOMIC NAMES atomic)
+    if(LIB_ATOMIC)
+        list(APPEND COMMON_LINK_LIBRARIES ${LIB_ATOMIC})
+    endif()
+endif()
 
 
 # Common interface
 add_library(c89atomic_common INTERFACE)
 target_compile_options    (c89atomic_common INTERFACE ${COMPILE_OPTIONS})
-target_link_libraries     (c89atomic_common INTERFACE ${COMMON_LIBRARIES})
-target_include_directories(c89atomic_common INTERFACE ${COMMON_INCLUDE_DIRS})
+target_link_libraries     (c89atomic_common INTERFACE ${COMMON_LINK_LIBRARIES})
 target_compile_definitions(c89atomic_common INTERFACE ${COMPILE_DEFINES})
 
 
