@@ -104,6 +104,34 @@ jobs:
           - compiler: msvc
             arch: x64
             config: {name: "Legacy MSVC", cmake_args: "-DC89ATOMIC_LEGACY_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          
+          # MSVC ARM builds (32-bit) - no ASM path
+          - compiler: msvc
+            arch: arm
+            config: {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: arm
+            config: {name: "Force C++", cmake_args: "-DC89ATOMIC_FORCE_CXX=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: arm
+            config: {name: "Modern MSVC", cmake_args: "-DC89ATOMIC_MODERN_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: arm
+            config: {name: "Legacy MSVC", cmake_args: "-DC89ATOMIC_LEGACY_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          
+          # MSVC ARM64 builds (64-bit) - no ASM path
+          - compiler: msvc
+            arch: arm64
+            config: {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: arm64
+            config: {name: "Force C++", cmake_args: "-DC89ATOMIC_FORCE_CXX=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: arm64
+            config: {name: "Modern MSVC", cmake_args: "-DC89ATOMIC_MODERN_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
+          - compiler: msvc
+            arch: arm64
+            config: {name: "Legacy MSVC", cmake_args: "-DC89ATOMIC_LEGACY_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
     steps:
       - uses: actions/checkout@v4
 
@@ -126,7 +154,7 @@ jobs:
 
       - name: Configure CMake (MSVC)
         if: matrix.compiler == 'msvc'
-        run: cmake -B build -A ${{ matrix.arch == 'x86' && 'Win32' || 'x64' }} ${{ matrix.config.cmake_args }}
+        run: cmake -B build -A ${{ matrix.arch == 'x86' && 'Win32' || matrix.arch == 'arm' && 'ARM' || matrix.arch == 'arm64' && 'ARM64' || 'x64' }} ${{ matrix.config.cmake_args }}
 
       - name: Configure CMake (MinGW)
         if: matrix.compiler == 'mingw'
