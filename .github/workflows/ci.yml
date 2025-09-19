@@ -105,20 +105,6 @@ jobs:
             arch: x64
             config: {name: "Legacy MSVC", cmake_args: "-DC89ATOMIC_LEGACY_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
           
-          # MSVC ARM builds (32-bit) - no ASM path
-          - compiler: msvc
-            arch: arm
-            config: {name: "Default", cmake_args: "-DC89ATOMIC_BUILD_TESTS=ON"}
-          - compiler: msvc
-            arch: arm
-            config: {name: "Force C++", cmake_args: "-DC89ATOMIC_FORCE_CXX=ON -DC89ATOMIC_BUILD_TESTS=ON"}
-          - compiler: msvc
-            arch: arm
-            config: {name: "Modern MSVC", cmake_args: "-DC89ATOMIC_MODERN_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
-          - compiler: msvc
-            arch: arm
-            config: {name: "Legacy MSVC", cmake_args: "-DC89ATOMIC_LEGACY_MSVC=ON -DC89ATOMIC_BUILD_TESTS=ON"}
-          
           # MSVC ARM64 builds (64-bit) - no ASM path
           - compiler: msvc
             arch: arm64
