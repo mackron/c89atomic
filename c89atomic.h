@@ -367,6 +367,30 @@ These functions are mandatory. If they cannot be implemented a compile time erro
     #define c89atomic_memory_order_acq_rel  5
     #define c89atomic_memory_order_seq_cst  6
 
+    #define C89ATOMIC_MSVC_ARM_INTRINSIC_NORETURN(dst, src, order, intrin, c89atomicType, msvcType)   \
+        switch (order) \
+        { \
+            case c89atomic_memory_order_relaxed: \
+            { \
+                intrin##_nf((volatile msvcType*)dst, (msvcType)src); \
+            } break; \
+            case c89atomic_memory_order_consume: \
+            case c89atomic_memory_order_acquire: \
+            { \
+                intrin##_acq((volatile msvcType*)dst, (msvcType)src); \
+            } break; \
+            case c89atomic_memory_order_release: \
+            { \
+                intrin##_rel((volatile msvcType*)dst, (msvcType)src); \
+            } break; \
+            case c89atomic_memory_order_acq_rel: \
+            case c89atomic_memory_order_seq_cst: \
+            default: \
+            { \
+                intrin((volatile msvcType*)dst, (msvcType)src); \
+            } break; \
+        } \
+
     #define C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, intrin, c89atomicType, msvcType)   \
         c89atomicType result; \
         switch (order) \
@@ -413,7 +437,7 @@ These functions are mandatory. If they cannot be implemented a compile time erro
     {
         #if defined(C89ATOMIC_ARM)
         {
-            C89ATOMIC_MSVC_ARM_INTRINSIC(dst, 0, order, _InterlockedExchange, c89atomic_flag, long);
+            C89ATOMIC_MSVC_ARM_INTRINSIC_NORETURN(dst, 0, order, _InterlockedExchange, c89atomic_flag, long);
         }
         #else
         {
