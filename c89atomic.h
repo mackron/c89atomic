@@ -389,7 +389,7 @@ These functions are mandatory. If they cannot be implemented a compile time erro
             { \
                 intrin((volatile msvcType*)dst, (msvcType)src); \
             } break; \
-        } \
+        }
 
     #define C89ATOMIC_MSVC_ARM_INTRINSIC(dst, src, order, intrin, c89atomicType, msvcType)   \
         c89atomicType result; \
