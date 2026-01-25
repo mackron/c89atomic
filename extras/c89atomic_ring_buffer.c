@@ -145,6 +145,8 @@ C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_produce(c89atomic_rin
         return;
     }
 
+    C89ATOMIC_RING_BUFFER_ASSERT(count <= pRingBuffer->capacity);
+
     head = c89atomic_load_explicit_32(&pRingBuffer->head, c89atomic_memory_order_relaxed);
     tail = c89atomic_load_explicit_32(&pRingBuffer->tail, c89atomic_memory_order_relaxed);
 
@@ -236,6 +238,8 @@ C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_consume(c89atomic_rin
     if (pRingBuffer == NULL) {
         return;
     }
+
+    C89ATOMIC_RING_BUFFER_ASSERT(count <= pRingBuffer->capacity);
 
     /*
     When we first mapped the buffer with `map_consume()` we used acquire semantics for the head. Since we won't
