@@ -19,6 +19,12 @@ To initialize the ring buffer, use `c89atomic_ring_buffer_init()`. You need to s
 of the buffer in elements, the size of an element in bytes (the `stride`) and a pointer to a buffer
 that acts as the underlying data store of the ring buffer.
 
+The capacity is limited to 0x7FFFFFFF. The reason is that the most significant bit is used as a
+flag to disambiguate whether or not the ring buffer is empty or full when the head and tail cursors
+are sitting on the same slot. The use of a 32-bit capacity instead of a `size_t` is to ensure the
+ring buffer can be lock-free on 32-bit hardware. An assertion failure will result when initializing
+if you specify a capacity that exceeds this limit.
+
 You need to allocate the internal buffer yourself. The buffer must be twice the size of the
 capacity multiplied by the stride:
 

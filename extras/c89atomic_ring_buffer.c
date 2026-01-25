@@ -35,6 +35,11 @@ C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_init(c89atomic_uint32 capac
         return;
     }
 
+    if (capacity > 0x7FFFFFFF) {
+        C89ATOMIC_RING_BUFFER_ASSERT(!"Ring buffer capacity exceeds limit of 0x7FFFFFFF.");
+        return;
+    }
+
     pRingBuffer->capacity = capacity;
     pRingBuffer->stride   = stride;
     pRingBuffer->flags    = flags;
