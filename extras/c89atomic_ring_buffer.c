@@ -115,8 +115,10 @@ C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_produce(c89atomic_rin
         count = remaining;
     }
 
-    /* Our pointer will always just be where our head is pointing. */
-    *ppMappedBuffer = C89ATOMIC_RING_BUFFER_OFFSET_PTR(pRingBuffer->pBuffer, (head & 0x7FFFFFFF) * pRingBuffer->stride);
+    if (count > 0) {
+        /* Our pointer will always just be where our head is pointing. */
+        *ppMappedBuffer = C89ATOMIC_RING_BUFFER_OFFSET_PTR(pRingBuffer->pBuffer, (head & 0x7FFFFFFF) * pRingBuffer->stride);
+    }
 
     return count;
 }
@@ -193,18 +195,20 @@ C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_consume(c89atomic_rin
         count = length;
     }
 
-    /* Our pointer will always just be where our tail is pointing. */
-    *ppMappedBuffer = C89ATOMIC_RING_BUFFER_OFFSET_PTR(pRingBuffer->pBuffer, (tail & 0x7FFFFFFF) * pRingBuffer->stride);
+    if (count > 0) {
+        /* Our pointer will always just be where our tail is pointing. */
+        *ppMappedBuffer = C89ATOMIC_RING_BUFFER_OFFSET_PTR(pRingBuffer->pBuffer, (tail & 0x7FFFFFFF) * pRingBuffer->stride);
 
-    /*
-    If the buffer is not mirrored we may need to copy some data from the start of the buffer to the overflow
-    part so the caller has a contiguous block to work with.
-    */
-    if ((pRingBuffer->flags & C89ATOMIC_RING_BUFFER_FLAG_MIRRORED) == 0) {
-        c89atomic_uint32 newTail = (tail & 0x7FFFFFFF) + count;
-        if (newTail  > pRingBuffer->capacity) {
-            newTail -= pRingBuffer->capacity;
-            C89ATOMIC_RING_BUFFER_COPY_MEMORY(C89ATOMIC_RING_BUFFER_OFFSET_PTR(pRingBuffer->pBuffer, pRingBuffer->capacity * pRingBuffer->stride), pRingBuffer->pBuffer, newTail * pRingBuffer->stride);
+        /*
+        If the buffer is not mirrored we may need to copy some data from the start of the buffer to the overflow
+        part so the caller has a contiguous block to work with.
+        */
+        if ((pRingBuffer->flags & C89ATOMIC_RING_BUFFER_FLAG_MIRRORED) == 0) {
+            c89atomic_uint32 newTail = (tail & 0x7FFFFFFF) + count;
+            if (newTail  > pRingBuffer->capacity) {
+                newTail -= pRingBuffer->capacity;
+                C89ATOMIC_RING_BUFFER_COPY_MEMORY(C89ATOMIC_RING_BUFFER_OFFSET_PTR(pRingBuffer->pBuffer, pRingBuffer->capacity * pRingBuffer->stride), pRingBuffer->pBuffer, newTail * pRingBuffer->stride);
+            }
         }
     }
 
