@@ -34,7 +34,7 @@ Below is an example for initializing a ring buffer:
 
     c89atomic_uint32 buffer[16 * 2];    // 2x because the buffer must be twice the size.
     c89atomic_ring_buffer rb;
-    c89atomic_ring_buffer_init(16, sizeof(buffer[0], 0, buffer, &rb);
+    c89atomic_ring_buffer_init(16, sizeof(buffer[0]), 0, buffer, &rb);
 
 You can use a mirrored buffer where the second half of the buffer is mapped to the same physical
 memory as the first half. If you do this, use the `MIRRORED` flag at initialization time. Below is
