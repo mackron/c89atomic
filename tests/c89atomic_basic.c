@@ -4,16 +4,19 @@ Tests basic logic of all atomic functions. Does not test atomicity.
 #include <stdio.h>
 #include <string.h>
 
-//#define C89ATOMIC_MODERN_GCC
-//#define C89ATOMIC_LEGACY_GCC
-//#define C89ATOMIC_LEGACY_GCC_ASM
-//#define C89ATOMIC_MODERN_MSVC
-//#define C89ATOMIC_LEGACY_MSVC
-//#define C89ATOMIC_LEGACY_MSVC_ASM
+/*#define C89ATOMIC_MODERN_GCC*/
+/*#define C89ATOMIC_LEGACY_GCC*/
+/*#define C89ATOMIC_LEGACY_GCC_ASM*/
+/*#define C89ATOMIC_MODERN_MSVC*/
+/*#define C89ATOMIC_LEGACY_MSVC*/
+/*#define C89ATOMIC_LEGACY_MSVC_ASM*/
 #include "../c89atomic.c"
 
 #include "../extras/c89atomic_deque.c"
 #include "../extras/c89atomic_bitmap_allocator.c"
+#include "../extras/c89atomic_ring_buffer.c"
+
+#include "../external/c89thread/c89thread.c"
 
 #if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
     #pragma GCC diagnostic push
@@ -619,6 +622,263 @@ static void c89atomic_test__basic__sizeof(void)
 }
 
 
+/* Data structure for the ring buffer producer thread test. */
+typedef struct
+{
+    c89atomic_ring_buffer* pRingBuffer;
+    c89atomic_uint32 totalToProduce;
+    c89atomic_uint32 produced;
+} c89atomic_ring_buffer_producer_data;
+
+static int c89atomic_ring_buffer_producer_thread(void* arg)
+{
+    c89atomic_ring_buffer_producer_data* pData = (c89atomic_ring_buffer_producer_data*)arg;
+
+    while (pData->produced < pData->totalToProduce) {
+        void* pMapped;
+        size_t mapped;
+
+        mapped = 5;
+        mapped = c89atomic_ring_buffer_map_produce(pData->pRingBuffer, mapped, &pMapped);
+        if (mapped > 0 && pMapped != NULL) {
+            size_t i;
+
+            for (i = 0; i < mapped; i += 1) {
+                ((c89atomic_uint32*)pMapped)[i] = pData->produced;
+                pData->produced += 1;
+            }
+
+            c89atomic_ring_buffer_unmap_produce(pData->pRingBuffer, mapped);
+        } else {
+            c89thrd_yield();
+        }
+    }
+    return 0;
+}
+
+static void c89atomic_test__ring_buffer(void)
+{
+    c89atomic_ring_buffer rb;
+    c89atomic_uint32 capacity = 16;
+    c89atomic_uint32 stride = sizeof(c89atomic_uint32);
+    unsigned char buffer[16 * sizeof(c89atomic_uint32) * 2];  /* Needs to be 2x capacity*stride for non-mirrored buffers. */
+    void* pMappedBuffer;
+    size_t mappedCount;
+
+    printf("Ring Buffer:\n");
+
+    c89atomic_ring_buffer_init(capacity, stride, 0, buffer, &rb);
+
+    /* Test that the producer cannot produce more than the capacity. */
+    printf("    %-*s", PRINT_WIDTH, "Producer cannot exceed capacity");
+    {
+        /* Try to map more elements than the capacity allows. */
+        mappedCount = c89atomic_ring_buffer_map_produce(&rb, capacity + 10, &pMappedBuffer);
+        if (mappedCount == capacity && pMappedBuffer != NULL) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+
+        /* Don't commit - we're just testing the clamping behavior. */
+    }
+
+    /* Test that the consumer cannot consume more than bytes available. */
+    printf("    %-*s", PRINT_WIDTH, "Consumer cannot exceed available");
+    {
+        /* The buffer is empty at this point, so trying to consume anything should return 0. */
+        mappedCount = c89atomic_ring_buffer_map_consume(&rb, 10, &pMappedBuffer);
+        if (mappedCount == 0) {
+            /* Now let's produce some data and try to consume more than available. */
+            mappedCount = c89atomic_ring_buffer_map_produce(&rb, 5, &pMappedBuffer);
+            if (mappedCount == 5 && pMappedBuffer != NULL) {
+                c89atomic_ring_buffer_unmap_produce(&rb, 5);
+
+                /* Now try to consume more than available (5 elements). */
+                mappedCount = c89atomic_ring_buffer_map_consume(&rb, 10, &pMappedBuffer);
+                if (mappedCount == 5 && pMappedBuffer != NULL) {
+                    c89atomic_test_passed();
+                } else {
+                    c89atomic_test_failed();
+                }
+            } else {
+                c89atomic_test_failed();
+            }
+        } else {
+            c89atomic_test_failed();
+        }
+    }
+
+    /* Test normal usage results in the correct data. */
+    printf("    %-*s", PRINT_WIDTH, "Normal usage produces correct data");
+    {
+        /* Reset the ring buffer for this test. */
+        c89atomic_ring_buffer_init(capacity, stride, 0, buffer, &rb);
+
+        /* Produce some data. */
+        mappedCount = c89atomic_ring_buffer_map_produce(&rb, 4, &pMappedBuffer);
+        if (mappedCount == 4 && pMappedBuffer != NULL) {
+            c89atomic_uint32* pData = (c89atomic_uint32*)pMappedBuffer;
+            pData[0] = 100;
+            pData[1] = 200;
+            pData[2] = 300;
+            pData[3] = 400;
+            c89atomic_ring_buffer_unmap_produce(&rb, 4);
+
+            /* Consume and verify the data. */
+            mappedCount = c89atomic_ring_buffer_map_consume(&rb, 4, &pMappedBuffer);
+            if (mappedCount == 4 && pMappedBuffer != NULL) {
+                c89atomic_uint32* pConsumed = (c89atomic_uint32*)pMappedBuffer;
+                if (pConsumed[0] == 100 && pConsumed[1] == 200 && pConsumed[2] == 300 && pConsumed[3] == 400) {
+                    c89atomic_ring_buffer_unmap_consume(&rb, 4);
+                    c89atomic_test_passed();
+                } else {
+                    c89atomic_test_failed();
+                }
+            } else {
+                c89atomic_test_failed();
+            }
+        } else {
+            c89atomic_test_failed();
+        }
+    }
+
+    /* Test mismatched production and consumption counts over multiple ring loops. */
+    printf("    %-*s", PRINT_WIDTH, "Mismatched produce/consume over loops");
+    {
+        c89atomic_uint32 i;
+        c89atomic_uint32 nextProduceValue = 0;
+        c89atomic_uint32 nextConsumeValue = 0;
+        int passed = 1;
+
+        /* Reset the ring buffer for this test. */
+        c89atomic_ring_buffer_init(capacity, stride, 0, buffer, &rb);
+
+        /*
+        Loop multiple times around the ring buffer. Produce in batches of 5, consume in batches of 3.
+        This tests the wrap-around logic with mismatched counts.
+        */
+        for (i = 0; i < 50 && passed; i += 1) {
+            mappedCount = c89atomic_ring_buffer_map_produce(&rb, 5, &pMappedBuffer);
+            if (mappedCount > 0 && pMappedBuffer != NULL) {
+                c89atomic_uint32 j;
+                c89atomic_uint32* pData = (c89atomic_uint32*)pMappedBuffer;
+
+                for (j = 0; j < (c89atomic_uint32)mappedCount; j += 1) {
+                    pData[j] = nextProduceValue;
+                    nextProduceValue += 1;
+                }
+
+                c89atomic_ring_buffer_unmap_produce(&rb, mappedCount);
+            }
+
+            /* Consume 3 elements and verify. */
+            mappedCount = c89atomic_ring_buffer_map_consume(&rb, 3, &pMappedBuffer);
+            if (mappedCount > 0 && pMappedBuffer != NULL) {
+                c89atomic_uint32 j;
+                c89atomic_uint32* pConsumed = (c89atomic_uint32*)pMappedBuffer;
+
+                for (j = 0; j < (c89atomic_uint32)mappedCount; j += 1) {
+                    if (pConsumed[j] != nextConsumeValue) {
+                        passed = 0;
+                        break;
+                    }
+
+                    nextConsumeValue += 1;
+                }
+
+                c89atomic_ring_buffer_unmap_consume(&rb, mappedCount);
+            }
+        }
+
+        /* Drain remaining elements. */
+        while (passed) {
+            mappedCount = c89atomic_ring_buffer_map_consume(&rb, capacity, &pMappedBuffer);
+            if (mappedCount == 0) {
+                break;
+            }
+
+            if (pMappedBuffer != NULL) {
+                c89atomic_uint32 j;
+                c89atomic_uint32* pConsumed = (c89atomic_uint32*)pMappedBuffer;
+
+                for (j = 0; j < (c89atomic_uint32)mappedCount; j += 1) {
+                    if (pConsumed[j] != nextConsumeValue) {
+                        passed = 0;
+                        break;
+                    }
+
+                    nextConsumeValue += 1;
+                }
+
+                c89atomic_ring_buffer_unmap_consume(&rb, mappedCount);
+            }
+        }
+
+        if (passed) {
+            c89atomic_test_passed();
+        } else {
+            c89atomic_test_failed();
+        }
+    }
+
+    /* Check for thread safety with the producer being on a separate thread. Confirm the data is correct. */
+    printf("    %-*s", PRINT_WIDTH, "Thread safety (producer on thread)");
+    {
+        c89thrd_t producerThread;
+        c89atomic_uint32 expectedValue = 0;
+        c89atomic_uint32 totalProduced = 100000;
+        c89atomic_uint32 consumed = 0;
+        int passed = 1;
+        c89atomic_ring_buffer_producer_data producerData;
+
+        /* Reset the ring buffer for this test. */
+        c89atomic_ring_buffer_init(capacity, stride, 0, buffer, &rb);
+
+        producerData.pRingBuffer = &rb;
+        producerData.totalToProduce = totalProduced;
+        producerData.produced = 0;
+
+        /* Create producer thread. */
+        if (c89thrd_create(&producerThread, c89atomic_ring_buffer_producer_thread, &producerData) != c89thrd_success) {
+            c89atomic_test_failed();
+        } else {
+            /* Consumer loop on main thread. */
+            while (consumed < totalProduced && passed) {
+                mappedCount = c89atomic_ring_buffer_map_consume(&rb, 5, &pMappedBuffer);
+                if (mappedCount > 0 && pMappedBuffer != NULL) {
+                    c89atomic_uint32 j;
+
+                    for (j = 0; j < mappedCount; j += 1) {
+                        if (((c89atomic_uint32*)pMappedBuffer)[j] != expectedValue) {
+                            passed = 0;
+                            break;
+                        }
+
+                        expectedValue += 1;
+                        consumed += 1;
+                    }
+
+                    c89atomic_ring_buffer_unmap_consume(&rb, mappedCount);
+                } else {
+                    c89thrd_yield();
+                }
+            }
+
+            c89thrd_join(producerThread, NULL);
+
+            if (passed) {
+                c89atomic_test_passed();
+            } else {
+                c89atomic_test_failed();
+            }
+        }
+    }
+
+    printf("\n");
+}
+
+
 int main(int argc, char** argv)
 {
     enable_colored_output();
@@ -850,6 +1110,11 @@ int main(int argc, char** argv)
             c89atomic_test_failed();
         }
     }
+
+
+    /* Ring buffer tests. */
+    printf("\n");
+    c89atomic_test__ring_buffer();
 
 
     (void)argc;

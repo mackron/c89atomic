@@ -115,6 +115,16 @@ target_include_directories(c89atomic PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries     (c89atomic PRIVATE c89atomic_common)
 
 
+# Ring Buffer
+add_library(c89atomic_ring_buffer STATIC
+    extras/c89atomic_ring_buffer.c
+    extras/c89atomic_ring_buffer.h
+)
+
+target_include_directories(c89atomic_ring_buffer PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/extras)
+target_link_libraries     (c89atomic_ring_buffer PRIVATE c89atomic_common)
+
+
 # Tests
 if(C89ATOMIC_BUILD_TESTS)
     enable_testing()
