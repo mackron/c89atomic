@@ -84,7 +84,9 @@ You can get an approximate count of the number of elements currently in the buff
 `c89atomic_ring_buffer_length()` function. In practice, a ring buffer will usually be operated on
 by two different threads simultaneously which means the returned value may already be out of date
 by the time it returns. You should therefore be careful with how you use this function in a
-multithreaded scenario.
+multithreaded scenario. In addition, the result is not well defined if you call it from a thread
+other than the producer or consumer thread so therefore you should avoid calling this function from
+a third thread.
 */
 
 /* BEG c89atomic_ring_buffer.h */
@@ -105,7 +107,7 @@ C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_produce(c89atomic_rin
 C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_produce(c89atomic_ring_buffer* pRingBuffer, size_t count);
 C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_consume(c89atomic_ring_buffer* pRingBuffer, size_t count, void** ppMappedBuffer);    /* Returns the number of elements actually mapped. */
 C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_consume(c89atomic_ring_buffer* pRingBuffer, size_t count);
-C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_length(const c89atomic_ring_buffer* pRingBuffer);      /* Returns the number of elements currently in the ring buffer. If something is in the middle of producing or consuming data on the ring buffer than the returned value may already be out of date. */
+C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_length(const c89atomic_ring_buffer* pRingBuffer);      /* Returns the number of elements currently in the ring buffer. Should only be called from the producer or consumer thread. If something is in the middle of producing or consuming data on the ring buffer than the returned value may already be out of date. */
 C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_capacity(const c89atomic_ring_buffer* pRingBuffer);
 /* END c89atomic_ring_buffer.h */
 

@@ -249,6 +249,7 @@ C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_length(const c8
 {
     c89atomic_uint32 head;
     c89atomic_uint32 tail;
+    c89atomic_uint32 length;
 
     if (pRingBuffer == NULL) {
         return 0;
@@ -257,7 +258,14 @@ C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_length(const c8
     head = c89atomic_load_explicit_32(&pRingBuffer->head, c89atomic_memory_order_relaxed);
     tail = c89atomic_load_explicit_32(&pRingBuffer->tail, c89atomic_memory_order_relaxed);
 
-    return c89atomic_ring_buffer_calculate_length(head, tail, pRingBuffer->capacity);
+    length = c89atomic_ring_buffer_calculate_length(head, tail, pRingBuffer->capacity);
+
+    /* Do a clamp just in case the caller violates the API contract and calls this from a non-consumer and non-producer thread. */
+    if (length > pRingBuffer->capacity) {
+        length = pRingBuffer->capacity;
+    }
+
+    return length;
 }
 
 C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_capacity(const c89atomic_ring_buffer* pRingBuffer)
