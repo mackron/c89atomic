@@ -103,10 +103,10 @@ typedef struct c89atomic_ring_buffer
 } c89atomic_ring_buffer;
 
 C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_init(c89atomic_uint32 capacity, c89atomic_uint32 stride, c89atomic_uint32 flags, void* pBuffer, c89atomic_ring_buffer* pRingBuffer);   /* Buffer must be `2 * capacity * stride`. That is twice the capacity. You can use a mirrored buffer, in which case specify the C89ATOMIC_RING_BUFFER_FLAG_MIRRORED flag. */
-C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_produce(c89atomic_ring_buffer* pRingBuffer, size_t count, void** ppMappedBuffer);    /* Returns the number of elements actually mapped. */
-C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_produce(c89atomic_ring_buffer* pRingBuffer, size_t count);
-C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_consume(c89atomic_ring_buffer* pRingBuffer, size_t count, void** ppMappedBuffer);    /* Returns the number of elements actually mapped. */
-C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_consume(c89atomic_ring_buffer* pRingBuffer, size_t count);
+C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_map_produce(c89atomic_ring_buffer* pRingBuffer, c89atomic_uint32 count, void** ppMappedBuffer);    /* Returns the number of elements actually mapped. */
+C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_produce(c89atomic_ring_buffer* pRingBuffer, c89atomic_uint32 count);
+C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_map_consume(c89atomic_ring_buffer* pRingBuffer, c89atomic_uint32 count, void** ppMappedBuffer);    /* Returns the number of elements actually mapped. */
+C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_consume(c89atomic_ring_buffer* pRingBuffer, c89atomic_uint32 count);
 C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_length(const c89atomic_ring_buffer* pRingBuffer);      /* Returns the number of elements currently in the ring buffer. Should only be called from the producer or consumer thread. If something is in the middle of producing or consuming data on the ring buffer than the returned value may already be out of date. */
 C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_capacity(const c89atomic_ring_buffer* pRingBuffer);
 /* END c89atomic_ring_buffer.h */

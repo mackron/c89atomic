@@ -40,6 +40,19 @@ C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_init(c89atomic_uint32 capac
         return;
     }
 
+    /*
+    When offsetting pointers when mapping we multiply our cursors by the stride. Cursors are clamped to the
+    capacity. We therefore want to make sure the multiplication of the capacity by the stride does not
+    overflow our 32-bit range. We could use the maximum value of a size_t here instead, but then there is
+    slightly different behaviour between 32- and 64-bit builds. For the purpose of this ring buffer, I would
+    prefer this be totally consistent between architectures so I'm enforcing a 32-bit maximum.
+    */
+    if (capacity > (0xFFFFFFFF / stride)) {
+        C89ATOMIC_RING_BUFFER_ASSERT(!"Ring buffer capacity multiplied by the stride exceeds the enforced 32-bit limit of 0xFFFFFFFF.");
+        return;
+    }
+    
+
     pRingBuffer->capacity = capacity;
     pRingBuffer->stride   = stride;
     pRingBuffer->flags    = flags;
@@ -84,7 +97,7 @@ static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_ring_buffer_calculate_remaini
     return capacity - c89atomic_ring_buffer_calculate_length(head, tail, capacity);
 }
 
-C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_produce(c89atomic_ring_buffer* pRingBuffer, size_t count, void** ppMappedBuffer)
+C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_map_produce(c89atomic_ring_buffer* pRingBuffer, c89atomic_uint32 count, void** ppMappedBuffer)
 {
     c89atomic_uint32 head;
     c89atomic_uint32 tail;
@@ -123,7 +136,7 @@ C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_produce(c89atomic_rin
     return count;
 }
 
-C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_produce(c89atomic_ring_buffer* pRingBuffer, size_t count)
+C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_produce(c89atomic_ring_buffer* pRingBuffer, c89atomic_uint32 count)
 {
     c89atomic_uint32 head;
     c89atomic_uint32 tail;
@@ -166,7 +179,7 @@ C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_produce(c89atomic_rin
     c89atomic_store_explicit_32(&pRingBuffer->head, head, c89atomic_memory_order_release);
 }
 
-C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_consume(c89atomic_ring_buffer* pRingBuffer, size_t count, void** ppMappedBuffer)
+C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_map_consume(c89atomic_ring_buffer* pRingBuffer, c89atomic_uint32 count, void** ppMappedBuffer)
 {
     c89atomic_uint32 head;
     c89atomic_uint32 tail;
@@ -215,7 +228,7 @@ C89ATOMIC_RING_BUFFER_API size_t c89atomic_ring_buffer_map_consume(c89atomic_rin
     return count;
 }
 
-C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_consume(c89atomic_ring_buffer* pRingBuffer, size_t count)
+C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_consume(c89atomic_ring_buffer* pRingBuffer, c89atomic_uint32 count)
 {
     c89atomic_uint32 head;
     c89atomic_uint32 tail;
