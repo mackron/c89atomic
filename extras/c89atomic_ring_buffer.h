@@ -80,6 +80,14 @@ The exact same process applies when consuming (reading) data:
     // Unmap.
     c89atomic_ring_buffer_unmap_consume(&rb, mappedCount);
 
+When mapping, it's possible that the range straddles the looping point. This is where whether or
+not the buffer is mirrored becomes relevant. When it's mirrored there is nothing of note to
+mention, but when the buffer is *not* mirrored, an extra data copy is employed at the looping
+point. This is to allow the caller to work on a contiguous block of memory. When a consume buffer
+is mapped a copy of the looped part of the data will be made and placed into the overflow portion
+of the internal buffer before returning. The same idea applies when producing data, but it's done
+when unmapping, and the copy is the other way around.
+
 You can get an approximate count of the number of elements currently in the buffer by calling the
 `c89atomic_ring_buffer_length()` function. In practice, a ring buffer will usually be operated on
 by two different threads simultaneously which means the returned value may already be out of date
