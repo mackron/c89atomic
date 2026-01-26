@@ -9,7 +9,13 @@
 #endif
 
 #ifndef C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE
-#define C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE   64
+    #if defined(__powerpc64__) || defined(__ppc64__) || defined(_ARCH_PPC64)
+    #define C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE   128
+    #elif defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__)) && defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED)
+    #define C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE   128
+    #else
+    #define C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE   64
+    #endif
 #endif
 
 /*
