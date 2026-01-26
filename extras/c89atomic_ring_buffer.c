@@ -114,13 +114,12 @@ C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_map_produce(c89
     }
 
     /*
-    For the head, only the producer will be making modifications to it so we can just use relaxed. For the tail,
-    it is indeed modified by the consumer, but since the producer does not actually have a data dependency on
-    anything done by the consumer the tail is essentially just a cursor for us to determine how much data we can
-    produce. It can therefore be relaxed as well.
+    For the head, only the producer will be making modifications to it so we can just use relaxed. For the tail
+    we need to ensure the producer does not overwrite anything that the consumer is still reading so we'll need
+    to use acquire semantics here (it will be released when the consumer is unmapped).
     */
     head = c89atomic_load_explicit_32(&pRingBuffer->head, c89atomic_memory_order_relaxed);
-    tail = c89atomic_load_explicit_32(&pRingBuffer->tail, c89atomic_memory_order_relaxed);
+    tail = c89atomic_load_explicit_32(&pRingBuffer->tail, c89atomic_memory_order_acquire);
 
     /* Now we need to clamp the count to ensure it never goes beyond our capacity. */
     remaining = c89atomic_ring_buffer_calculate_remaining(head, tail, pRingBuffer->capacity);
@@ -262,8 +261,12 @@ C89ATOMIC_RING_BUFFER_API void c89atomic_ring_buffer_unmap_consume(c89atomic_rin
         tail ^= 0x80000000;             /* Flip the loop flag. */
     }
 
-    /* The producer doesn't care what we do with the data in the buffer so we should be able to use relaxed semantics here for the tail. */
-    c89atomic_store_explicit_32(&pRingBuffer->tail, tail, c89atomic_memory_order_relaxed);
+    /*
+    The producer will be using acquire semantics for the tail, so we'll want to mirror that with a release here. If
+    we were to use relaxed here we would run the risk of the producer overwriting data before the consumer has
+    finished reading it.
+    */
+    c89atomic_store_explicit_32(&pRingBuffer->tail, tail, c89atomic_memory_order_release);
 }
 
 C89ATOMIC_RING_BUFFER_API c89atomic_uint32 c89atomic_ring_buffer_length(const c89atomic_ring_buffer* pRingBuffer)
