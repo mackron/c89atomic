@@ -107,9 +107,13 @@ a third thread.
 typedef struct c89atomic_ring_buffer
 {
     c89atomic_uint32 head;      /* Atomic. Most significant bit is a loop flag. When the head is equal to the tail (including the flag) it means the buffer is empty. If the only difference is the flag, it means the buffer is full. */
-    c89atomic_uint8  pad0[C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE - 4];   /* The head will be modified by the producer, but untouched by the consumer. The reverse is true for the tail. The idea here is to ensure the head and tail are on their own cache lines thereby improving cache coherency. */
+    #if C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE > 4
+    c89atomic_uint8 pad0[C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE - 4];   /* The head will be modified by the producer, but untouched by the consumer. The reverse is true for the tail. The idea here is to ensure the head and tail are on their own cache lines thereby improving cache coherency. */
+    #endif
     c89atomic_uint32 tail;      /* Atomic. Most significant bit is a loop flag. */
-    c89atomic_uint8  pad1[C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE - 4];
+    #if C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE > 4
+    c89atomic_uint8 pad1[C89ATOMIC_RING_BUFFER_CACHE_LINE_SIZE - 4];
+    #endif
     c89atomic_uint32 capacity;  /* Capacity of the buffer, in elements. */
     c89atomic_uint32 stride;    /* Size of an element in bytes. */
     c89atomic_uint32 flags;
