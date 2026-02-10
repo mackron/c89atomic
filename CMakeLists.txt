@@ -118,7 +118,7 @@ add_library(c89atomic STATIC
 
 target_include_directories(
 	c89atomic 
-	INTERFACE
+	PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
 	$<INSTALL_INTERFACE:/>
 	)
