@@ -91,10 +91,15 @@ endif()
 set(COMMON_LINK_LIBRARIES)
 
 if (UNIX)
-    find_library(LIB_ATOMIC NAMES atomic)
-    if(LIB_ATOMIC)
-        list(APPEND COMMON_LINK_LIBRARIES ${LIB_ATOMIC})
-    endif()
+	# pure
+	if(NOT MINGW AND NOT MSYS AND NOT CYGWIN)
+		find_library(LIB_ATOMIC NAMES atomic)
+		if(LIB_ATOMIC)
+			list(APPEND COMMON_LINK_LIBRARIES ${LIB_ATOMIC})
+		endif()
+	else()
+
+	endif()
 endif()
 
 
