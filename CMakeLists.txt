@@ -91,14 +91,11 @@ endif()
 set(COMMON_LINK_LIBRARIES)
 
 if (UNIX)
-	# pure
 	if(NOT MINGW AND NOT MSYS AND NOT CYGWIN)
 		find_library(LIB_ATOMIC NAMES atomic)
 		if(LIB_ATOMIC)
 			list(APPEND COMMON_LINK_LIBRARIES ${LIB_ATOMIC})
 		endif()
-	else()
-
 	endif()
 endif()
 
@@ -116,13 +113,11 @@ add_library(c89atomic STATIC
     c89atomic.h
 )
 
-target_include_directories(
-	c89atomic 
-	PUBLIC
+target_include_directories(c89atomic PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
 	$<INSTALL_INTERFACE:/>
-	)
-target_link_libraries     (c89atomic PRIVATE c89atomic_common)
+)
+target_link_libraries(c89atomic PRIVATE c89atomic_common)
 
 
 # Ring Buffer
