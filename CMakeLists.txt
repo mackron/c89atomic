@@ -96,6 +96,11 @@ if (UNIX)
 		if(LIB_ATOMIC)
 			list(APPEND COMMON_LINK_LIBRARIES ${LIB_ATOMIC})
 		endif()
+
+        find_library(LIB_PTHREAD NAMES pthread)
+        if(LIB_PTHREAD)
+            list(APPEND COMMON_LINK_LIBRARIES ${LIB_PTHREAD})
+        endif()
 	endif()
 endif()
 
