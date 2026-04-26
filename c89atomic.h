@@ -306,8 +306,8 @@ Here is where we need to determine the code path we're going to take. This can g
 due to the myriad of different compiler versions and available APIs.
 
 If you need to add support for a new (or old!) compiler, try figuring out which code path is
-most appropriate and try to plug it into the code path selection logic below. If none of the
-existing code paths are appropriate, you'll need to add a new code path and implement it.
+most appropriate and plug it into the code path selection logic below. If none of the existing
+code paths are appropriate, you'll need to implement one.
 */
 #if !defined(C89ATOMIC_MODERN_MSVC) && \
     !defined(C89ATOMIC_LEGACY_MSVC) && \
