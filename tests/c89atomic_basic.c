@@ -1137,6 +1137,8 @@ int main(int argc, char** argv)
         printf("Digital Mars %d\n", __DMC__);
     #elif defined(__BORLANDC__)
         printf("Borland C++ %d\n", __BORLANDC__);
+    #elif defined(__chibicc__)
+        printf("chibicc %d\n", __chibicc__);
     #else
         printf("Unknown\n");
     #endif
@@ -1197,6 +1199,8 @@ int main(int argc, char** argv)
         printf("MSVC _Interlocked* intrinsics (no lock-free 8/16 bit)\n");
     #elif defined(C89ATOMIC_LEGACY_MSVC_ASM)
         printf("MSVC inlined assembly\n");
+    #elif defined(C89ATOMIC_CHIBICC)
+        printf("chibicc\n");
     #endif
 
     if (g_ErrorCount > 0) {

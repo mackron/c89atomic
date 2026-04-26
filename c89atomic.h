@@ -314,7 +314,8 @@ code paths are appropriate, you'll need to implement one.
     !defined(C89ATOMIC_LEGACY_MSVC_ASM) && \
     !defined(C89ATOMIC_MODERN_GCC) && \
     !defined(C89ATOMIC_LEGACY_GCC) && \
-    !defined(C89ATOMIC_LEGACY_GCC_ASM)
+    !defined(C89ATOMIC_LEGACY_GCC_ASM) && \
+    !defined(C89ATOMIC_CHIBICC)
     #if defined(_MSC_VER) || defined(__WATCOMC__) || defined(__DMC__) || defined(__BORLANDC__)
         #if (defined(_MSC_VER) && _MSC_VER > 1600)
             /* Visual Studio 2010 and later. This path uses _Interlocked* intrinsics. */
@@ -338,6 +339,8 @@ code paths are appropriate, you'll need to implement one.
     #elif (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)))
         /* Legacy GCC-compatible compilers. This path uses __sync_* intrinsics. */
         #define C89ATOMIC_LEGACY_GCC
+    #elif defined(__chibicc__)
+        #define C89ATOMIC_CHIBICC
     #else
         /* Ancient GCC compilers, or non-GCC compilers with support for GCC-style inlined assembly (Gas syntax). */
         #define C89ATOMIC_LEGACY_GCC_ASM
@@ -717,6 +720,42 @@ These functions are mandatory. If they cannot be implemented a compile time erro
             #error Unsupported architecture.
         }
         #endif
+    }
+#endif
+
+#if defined(C89ATOMIC_CHIBICC)
+    /*
+    chibicc advertises support for C11 stdatomic, but it's busted:
+
+        - fetch_add, fetch_sub, etc. are incorrect. They're supposed to return the old value, but
+          they in fact return the new value.
+
+        - Nothing except for atomic_exchange and atomic_compare_exchange are actually atomic.
+
+    So even though a stdatomic.h is available, it's not useful so we'll need to do a bit of a tap
+    dance to make it work. Everything is implemented in terms of atomic_exchange and
+    atomic_compare_exchange. We also use the most conservative memory ordering for everything.
+    */
+    #define c89atomic_memory_order_relaxed                   0
+    #define c89atomic_memory_order_consume                   1
+    #define c89atomic_memory_order_acquire                   2
+    #define c89atomic_memory_order_release                   3
+    #define c89atomic_memory_order_acq_rel                   4
+    #define c89atomic_memory_order_seq_cst                   5
+
+    typedef c89atomic_uint32 c89atomic_flag;
+
+    #define c89atomic_flag_test_and_set_explicit(dst, order) __builtin_atomic_exchange(dst, 1)
+    #define c89atomic_flag_clear_explicit(dst, order)        __builtin_atomic_exchange(dst, 0)
+
+    static C89ATOMIC_INLINE c89atomic_flag c89atomic_flag_load_explicit(volatile const c89atomic_flag* dst, c89atomic_memory_order order)
+    {
+        c89atomic_flag expected;
+
+        expected = 0;
+        __builtin_compare_and_swap(dst, &expected, 0);
+
+        return expected;
     }
 #endif
 
@@ -3503,6 +3542,111 @@ not represented here.
     #else
         #error Unsupported compiler.
     #endif
+#endif
+
+#if defined(C89ATOMIC_CHIBICC)
+    #define C89ATOMIC_HAS_NATIVE_COMPARE_EXCHANGE
+
+    /*
+    Not fully sure how to do a thread fence with chibicc. I'm going to brute force it with a dummy exchange.
+    */
+    static void c89atomic_thread_fence(c89atomic_memory_order order)
+    {
+        static c89atomic_uint32 dummy;
+        __builtin_atomic_exchange(&dummy, 0);
+
+        (void)dummy;
+    }
+
+    /* For the signal fence I'm just doing a thread fence and hoping chibicc does not do any fancy compile-time reordering. */
+    #define c89atomic_signal_fence(order)                           c89atomic_thread_fence(order)
+
+    #define c89atomic_is_lock_free_8(ptr)                           1
+    #define c89atomic_is_lock_free_16(ptr)                          1
+    #define c89atomic_is_lock_free_32(ptr)                          1
+    #define c89atomic_is_lock_free_64(ptr)                          1
+
+    #define c89atomic_store_explicit_8( dst, src, order)            __builtin_atomic_exchange(dst, src)
+    #define c89atomic_store_explicit_16(dst, src, order)            __builtin_atomic_exchange(dst, src)
+    #define c89atomic_store_explicit_32(dst, src, order)            __builtin_atomic_exchange(dst, src)
+    #define c89atomic_store_explicit_64(dst, src, order)            __builtin_atomic_exchange(dst, src)
+
+    #define C89ATOMIC_CHIBICC_LOAD(sizeInBits) \
+        static C89ATOMIC_INLINE c89atomic_uint##sizeInBits c89atomic_load_explicit_##sizeInBits(volatile c89atomic_uint##sizeInBits* dst, c89atomic_memory_order order) \
+        { \
+            c89atomic_uint##sizeInBits expected = 0; \
+            __builtin_compare_and_swap(dst, &expected, 0); \
+            return expected; \
+        }
+
+    C89ATOMIC_CHIBICC_LOAD(8)
+    C89ATOMIC_CHIBICC_LOAD(16)
+    C89ATOMIC_CHIBICC_LOAD(32)
+    C89ATOMIC_CHIBICC_LOAD(64)
+
+    #define c89atomic_exchange_explicit_8( dst, src, order)         __builtin_atomic_exchange(dst, src)
+    #define c89atomic_exchange_explicit_16(dst, src, order)         __builtin_atomic_exchange(dst, src)
+    #define c89atomic_exchange_explicit_32(dst, src, order)         __builtin_atomic_exchange(dst, src)
+    #define c89atomic_exchange_explicit_64(dst, src, order)         __builtin_atomic_exchange(dst, src)
+
+    #define c89atomic_compare_exchange_strong_explicit_8( dst, expected, replacement, successOrder, failureOrder)   __builtin_compare_and_swap(dst, expected, replacement)
+    #define c89atomic_compare_exchange_strong_explicit_16(dst, expected, replacement, successOrder, failureOrder)   __builtin_compare_and_swap(dst, expected, replacement)
+    #define c89atomic_compare_exchange_strong_explicit_32(dst, expected, replacement, successOrder, failureOrder)   __builtin_compare_and_swap(dst, expected, replacement)
+    #define c89atomic_compare_exchange_strong_explicit_64(dst, expected, replacement, successOrder, failureOrder)   __builtin_compare_and_swap(dst, expected, replacement)
+
+    #define c89atomic_compare_exchange_weak_explicit_8( dst, expected, replacement, successOrder, failureOrder)     __builtin_compare_and_swap(dst, expected, replacement)
+    #define c89atomic_compare_exchange_weak_explicit_16(dst, expected, replacement, successOrder, failureOrder)     __builtin_compare_and_swap(dst, expected, replacement)
+    #define c89atomic_compare_exchange_weak_explicit_32(dst, expected, replacement, successOrder, failureOrder)     __builtin_compare_and_swap(dst, expected, replacement)
+    #define c89atomic_compare_exchange_weak_explicit_64(dst, expected, replacement, successOrder, failureOrder)     __builtin_compare_and_swap(dst, expected, replacement)
+
+    /* CAS needs to be implemented as a function because __builtin_compare_and_swap() needs to take the address of the expected value. */
+    static C89ATOMIC_INLINE c89atomic_uint8  c89atomic_compare_and_swap_8 (volatile c89atomic_uint8*  dst, c89atomic_uint8  expected, c89atomic_uint8  replacement) { __builtin_compare_and_swap(dst, &expected, replacement); return expected; }
+    static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_compare_and_swap_16(volatile c89atomic_uint16* dst, c89atomic_uint16 expected, c89atomic_uint16 replacement) { __builtin_compare_and_swap(dst, &expected, replacement); return expected; }
+    static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_compare_and_swap_32(volatile c89atomic_uint32* dst, c89atomic_uint32 expected, c89atomic_uint32 replacement) { __builtin_compare_and_swap(dst, &expected, replacement); return expected; }
+    static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 replacement) { __builtin_compare_and_swap(dst, &expected, replacement); return expected; }
+
+    #define C89ATOMIC_CHIBICC_FETCH_OP(sizeInBits, opName, opInst) \
+        static C89ATOMIC_INLINE c89atomic_uint##sizeInBits c89atomic_fetch_##opName##_explicit_##sizeInBits(volatile c89atomic_uint##sizeInBits* dst, c89atomic_uint##sizeInBits src, c89atomic_memory_order order) \
+        { \
+            c89atomic_uint##sizeInBits oldValue; \
+            c89atomic_uint##sizeInBits newValue; \
+            do { \
+                oldValue = c89atomic_load_explicit_##sizeInBits(dst, c89atomic_memory_order_relaxed); \
+                newValue = oldValue opInst src; \
+            } while (c89atomic_compare_and_swap_##sizeInBits(dst, oldValue, newValue) != oldValue); \
+            (void)order; \
+            return oldValue; \
+        }
+
+    #define C89ATOMIC_CHIBICC_FETCH_ADD(sizeInBits) C89ATOMIC_CHIBICC_FETCH_OP(sizeInBits, add, +)
+    C89ATOMIC_CHIBICC_FETCH_ADD(8)
+    C89ATOMIC_CHIBICC_FETCH_ADD(16)
+    C89ATOMIC_CHIBICC_FETCH_ADD(32)
+    C89ATOMIC_CHIBICC_FETCH_ADD(64)
+
+    #define C89ATOMIC_CHIBICC_FETCH_SUB(sizeInBits) C89ATOMIC_CHIBICC_FETCH_OP(sizeInBits, sub, -)
+    C89ATOMIC_CHIBICC_FETCH_SUB(8)
+    C89ATOMIC_CHIBICC_FETCH_SUB(16)
+    C89ATOMIC_CHIBICC_FETCH_SUB(32)
+    C89ATOMIC_CHIBICC_FETCH_SUB(64)
+
+    #define C89ATOMIC_CHIBICC_FETCH_OR(sizeInBits) C89ATOMIC_CHIBICC_FETCH_OP(sizeInBits, or, |)
+    C89ATOMIC_CHIBICC_FETCH_OR(8)
+    C89ATOMIC_CHIBICC_FETCH_OR(16)
+    C89ATOMIC_CHIBICC_FETCH_OR(32)
+    C89ATOMIC_CHIBICC_FETCH_OR(64)
+
+    #define C89ATOMIC_CHIBICC_FETCH_XOR(sizeInBits) C89ATOMIC_CHIBICC_FETCH_OP(sizeInBits, xor, ^)
+    C89ATOMIC_CHIBICC_FETCH_XOR(8)
+    C89ATOMIC_CHIBICC_FETCH_XOR(16)
+    C89ATOMIC_CHIBICC_FETCH_XOR(32)
+    C89ATOMIC_CHIBICC_FETCH_XOR(64)
+
+    #define C89ATOMIC_CHIBICC_FETCH_AND(sizeInBits) C89ATOMIC_CHIBICC_FETCH_OP(sizeInBits, and, &)
+    C89ATOMIC_CHIBICC_FETCH_AND(8)
+    C89ATOMIC_CHIBICC_FETCH_AND(16)
+    C89ATOMIC_CHIBICC_FETCH_AND(32)
+    C89ATOMIC_CHIBICC_FETCH_AND(64)
 #endif
 
 

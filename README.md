@@ -19,6 +19,7 @@ The following compilers are supported:
   - OpenWatcom (Tested with 2.0)
   - Digital Mars
   - Borland C++ (Tested with 5.02)
+  - chibicc
 
 New compilers will use intrinsics. GCC-likes, such as GCC and Clang, will use `__atomic_*` intrinsics through a
 pre-processor define and should have no overhead. This uses `__GNUC__` to detect GCC-likes.
