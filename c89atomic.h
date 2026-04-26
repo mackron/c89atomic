@@ -335,14 +335,12 @@ existing code paths are appropriate, you'll need to add a new code path and impl
     #elif (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7))) || defined(__clang__)
         /* Modern GCC-compatible compilers. This path uses __atomic_* intrinsics. */
         #define C89ATOMIC_MODERN_GCC
+    #elif (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)))
+        /* Legacy GCC-compatible compilers. This path uses __sync_* intrinsics. */
+        #define C89ATOMIC_LEGACY_GCC
     #else
-        #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
-            /* Legacy GCC-compatible compilers. This path uses __sync_* intrinsics. */
-            #define C89ATOMIC_LEGACY_GCC
-        #else
-            /* Ancient GCC compilers, or non-GCC compilers with support for GCC-style inlined assembly (Gas syntax). */
-            #define C89ATOMIC_LEGACY_GCC_ASM
-        #endif
+        /* Ancient GCC compilers, or non-GCC compilers with support for GCC-style inlined assembly (Gas syntax). */
+        #define C89ATOMIC_LEGACY_GCC_ASM
     #endif
 #endif
 /* END c89atomic_codepath.h */
