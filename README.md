@@ -4,10 +4,10 @@
     <a href="https://discord.gg/9vpqbjU"><img src="https://img.shields.io/discord/712952679415939085?label=discord&logo=discord" alt="discord"></a>
 </p>
 
-This library aims to implement an equivalent to the C11 atomics library. It's intended to be used as a way to
-enable the use of atomics in a mostly consistent manner to modern C, while still enabling compatibility with
-older compilers. This is *not* a drop-in replacement for C11 atomics, but is very similar. Only limited testing
-has been done so use at your own risk. I'm happy to accept feedback and pull requests with bug fixes.
+This is a mostly C89 compatible atomics library. It's intended to be used as a way to enable the use of atomics
+in a mostly consistent manner to modern C, while still enabling compatibility with older compilers. This is
+*not* a drop-in replacement for C11 atomics, but is very similar. Only limited testing has been done so use at
+your own risk. I'm happy to accept feedback and pull requests with bug fixes.
 
 The following compilers are supported:
 
@@ -28,6 +28,10 @@ assembly paths: GCC-style (GAS syntax) and MSVC-style. For an old compiler to be
 of these two paths. Note that only 32- and 64-bit x86 is supported for inlined assembly. I have not thouroughly
 tested the inlined assembly paths. It passes basics tests, but things like memory ordering may have some issues.
 Advice welcome on how to improve this.
+
+For practicality this library supports 64-bit atomics and is therefore not strictly C89 compatible since C89
+does not technically support 64-bit integers (these are compiler extensions). However, it should still work on
+old compilers. In addition, this library currently assumes `int` is 32 bits.
 
 
 Usage
