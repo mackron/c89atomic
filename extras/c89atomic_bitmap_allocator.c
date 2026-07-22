@@ -79,13 +79,13 @@ C89ATOMIC_BITMAP_ALLOCATOR_API c89atomic_bitmap_allocator_result c89atomic_bitma
 
 C89ATOMIC_BITMAP_ALLOCATOR_API void c89atomic_bitmap_allocator_free(c89atomic_bitmap_allocator* pAllocator, size_t index)
 {
-    c89atomic_uint32 wordIndex;
+    size_t wordIndex;
     c89atomic_uint32 bitIndex;
     c89atomic_uint32 oldWord;
     c89atomic_uint32 newWord;
 
-    wordIndex = (c89atomic_uint32)((index & 0xFFFFFFFF) >> 5);   /* slot / 32 */
-    bitIndex  = (c89atomic_uint32)((index & 0xFFFFFFFF) & 31);   /* slot % 32 */
+    wordIndex = index >> 5;                     /* slot / 32 */
+    bitIndex  = (c89atomic_uint32)(index & 31); /* slot % 32 */
 
     if (wordIndex >= pAllocator->sizeInWords) {
         assert(!"Index out of bounds in c89atomic_bitmap_allocator_free().");
