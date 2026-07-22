@@ -44,7 +44,7 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_tail(c89atomic_d
     /*
     NOTE:
 
-    The Lê et al. paper has an unsigned integer underflow bug in it. Just above we are loading the tail and the
+    The Lê et al. paper has an unsigned integer underflow bug in it. Just above we are loading the tail and then
     subtracting 1 from it. When a deque is freshly initialized, most developers will intuitively set the head
     and tail to 0. As a result, the subtraction by 1 will result in the tail underflowing. In the paper, the
     conditional below is simply `if (head <= tail)`, both `tail` and `head` of which are unsigned. When the tail
@@ -65,13 +65,13 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_tail(c89atomic_d
             c89atomic_bool raceResult = c89atomic_compare_exchange_strong_explicit_32(&pDeque->head, &head, head + 1, c89atomic_memory_order_seq_cst, c89atomic_memory_order_relaxed);
 
             /*
-            Regardless of the output of the race we need to put the tail back to it's original location. In this branch (when we are taking
+            Regardless of the output of the race we need to put the tail back to its original location. In this branch (when we are taking
             the last item in the queue), we are moving the head forward rather than the tail backward which means we need to undo the subtraction
             by 1 we did earlier.
             */
             c89atomic_store_explicit_32(&pDeque->tail, tail + 1, c89atomic_memory_order_relaxed);
 
-            /* Terminate early if we failed the race against a theif. */
+            /* Terminate early if we failed the race against a thief. */
             if (!raceResult) {
                 return C89ATOMIC_DEQUE_NO_DATA_AVAILABLE;
             }

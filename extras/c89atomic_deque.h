@@ -14,7 +14,7 @@ zero out the head and tail before using it.
 This code will do validation against the capacity of the deque, but will not validate function parameters. It's up to you to ensure
 valid pointers are passed to all function calls.
 
-I've designed this with the intentenion that it be amalgamated into other projects. You may need to adapt the code to suit your
+I've designed this with the intention that it be amalgamated into other projects. You may need to adapt the code to suit your
 specific requirements. The data type of the deque is defined by `C89ATOMIC_DEQUE_T` which defaults to `void*`. As a result the
 `*_ptr` variants of atomic operations are used. If you want to use a non-pointer type, you'll need to adapt the code appropriately.
 */
