@@ -35,7 +35,7 @@ typedef enum
     C89ATOMIC_DEQUE_CANCELLED               /* Can be returned in the event of a data race when stealing. */
 } c89atomic_deque_result;
 
-/* Capacity must be power of 2.*/
+/* Capacity must be power of 2 and cannot exceed 0x40000000. */
 #ifndef C89ATOMIC_DEQUE_CAP
 #define C89ATOMIC_DEQUE_CAP 256
 #endif

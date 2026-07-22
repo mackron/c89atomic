@@ -33,9 +33,10 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_tail(c89atomic_d
 {
     c89atomic_uint32 tail;
     c89atomic_uint32 head;
+    c89atomic_uint32 dist;
 
     tail = c89atomic_load_explicit_32(&pDeque->tail, c89atomic_memory_order_relaxed);
-    tail -= 1UL;  /* Can underflow, but should not matter here because we'll be masking with `C89ATOMIC_DEQUE_CAP`, and the conditional below is cast to a signed integer. See note below. */
+    tail -= 1UL;  /* Can underflow, but should not matter here because we'll be masking with `C89ATOMIC_DEQUE_CAP`, and the conditional below accounts for it. See note below. */
     c89atomic_store_explicit_32(&pDeque->tail, tail, c89atomic_memory_order_relaxed);
     c89atomic_thread_fence(c89atomic_memory_order_seq_cst);
     head = c89atomic_load_explicit_32(&pDeque->head, c89atomic_memory_order_relaxed);
@@ -46,12 +47,15 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_tail(c89atomic_d
     The Lê et al. paper has an unsigned integer underflow bug in it. Just above we are loading the tail and the
     subtracting 1 from it. When a deque is freshly initialized, most developers will intuitively set the head
     and tail to 0. As a result, the subtraction by 1 will result in the tail underflowing. In the paper, the
-    conditional below is done against the unsigned values of the head and tail which will result in the
-    algorithm thinking that the deque is filled when it's actually empty.
+    conditional below is simply `if (head <= tail)`, both `tail` and `head` of which are unsigned. When the tail
+    has underflowed, this check will fail which will result in the algorithm thinking that the deque is filled
+    when it's actually empty.
 
-    I'm going to fix this by casting to a signed integer.
+    I'm going to fix this by comparing the unsigned distance between the tail and the head and ensuring it's
+    less than 0x80000000.
     */
-    if ((c89atomic_int32)head <= (c89atomic_int32)tail) {
+    dist = tail - head;
+    if (dist < 0x80000000UL) {  /* Or alternatively: `if ((c89atomic_int32)(tail - head) >= 0)` */
         /* Not empty. */
         C89ATOMIC_DEQUE_T x;
 
@@ -86,12 +90,14 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_head(c89atomic_d
 {
     c89atomic_uint32 head;
     c89atomic_uint32 tail;
+    c89atomic_uint32 dist;
 
     head = c89atomic_load_explicit_32(&pDeque->head, c89atomic_memory_order_acquire);
     c89atomic_thread_fence(c89atomic_memory_order_seq_cst);
     tail = c89atomic_load_explicit_32(&pDeque->tail, c89atomic_memory_order_acquire);
 
-    if ((c89atomic_int32)head < (c89atomic_int32)tail) {
+    dist = tail - head;
+    if (dist < 0x80000000UL && dist != 0) { /* Or alternatively: `if ((c89atomic_int32)(tail - head) > 0)` */
         C89ATOMIC_DEQUE_T x;
 
         x = c89atomic_load_explicit_ptr((volatile void**)&pDeque->buffer[head & (C89ATOMIC_DEQUE_CAP - 1)], c89atomic_memory_order_relaxed);
