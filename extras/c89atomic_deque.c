@@ -36,7 +36,7 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_tail(c89atomic_d
     c89atomic_uint32 dist;
 
     tail = c89atomic_load_explicit_32(&pDeque->tail, c89atomic_memory_order_relaxed);
-    tail -= 1UL;  /* Can underflow, but should not matter here because we'll be masking with `C89ATOMIC_DEQUE_CAP`, and the conditional below accounts for it. See note below. */
+    tail -= 1UL;  /* Can underflow, but should not matter here because we'll be masking with `C89ATOMIC_DEQUE_CAP - 1`, and the conditional below accounts for it. See note below. */
     c89atomic_store_explicit_32(&pDeque->tail, tail, c89atomic_memory_order_relaxed);
     c89atomic_thread_fence(c89atomic_memory_order_seq_cst);
     head = c89atomic_load_explicit_32(&pDeque->head, c89atomic_memory_order_relaxed);
