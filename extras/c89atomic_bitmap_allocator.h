@@ -5,6 +5,7 @@ This does not do input parameter validation for null pointers. You must do this 
 #define c89atomic_bitmap_allocator_h
 
 #include "../c89atomic.h"
+#include <stddef.h>
 
 #ifndef C89ATOMIC_BITMAP_ALLOCATOR_API
 #define C89ATOMIC_BITMAP_ALLOCATOR_API
