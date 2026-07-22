@@ -29,7 +29,7 @@ C89ATOMIC_BITMAP_ALLOCATOR_API c89atomic_bitmap_allocator_result c89atomic_bitma
         return C89ATOMIC_BITMAP_ALLOCATOR_INVALID_ARGS;
     }
 
-    /* The size in bits must be a multiple of 31. */
+    /* The size in bits must be a multiple of 32. */
     if ((sizeInBits & 31) != 0) {
         return C89ATOMIC_BITMAP_ALLOCATOR_INVALID_ARGS;
     }
