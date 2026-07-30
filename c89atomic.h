@@ -1074,7 +1074,7 @@ not represented here.
         }
     #endif
 
-    #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+    #if defined(C89ATOMIC_IS_LOCK_FREE_64)
         #define c89atomic_compare_and_swap_64(dst, expected, replacement) (c89atomic_uint64)_InterlockedCompareExchange64((volatile c89atomic_int64*)dst, (c89atomic_int64)replacement, (c89atomic_int64)expected)
     #else
         static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_compare_and_swap_64(volatile c89atomic_uint64* dst, c89atomic_uint64 expected, c89atomic_uint64 replacement)
@@ -1153,7 +1153,7 @@ not represented here.
 
     static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_load_explicit_64(volatile const c89atomic_uint64* ptr, c89atomic_memory_order order)
     {
-        #if defined(C89ATOMIC_IS_LOCK_FREE_32)
+        #if defined(C89ATOMIC_IS_LOCK_FREE_64)
         {
             #if defined(C89ATOMIC_ARM)
             {
