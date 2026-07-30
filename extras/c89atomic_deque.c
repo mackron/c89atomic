@@ -22,7 +22,7 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_push_tail(c89atomic_d
         return C89ATOMIC_DEQUE_OUT_OF_MEMORY;  /* Queue is full */
     }
 
-    c89atomic_store_explicit_ptr((volatile void**)&pDeque->buffer[tail & (C89ATOMIC_DEQUE_CAP - 1)], value, c89atomic_memory_order_relaxed);
+    c89atomic_store_explicit_ptr((void* volatile*)&pDeque->buffer[tail & (C89ATOMIC_DEQUE_CAP - 1)], value, c89atomic_memory_order_relaxed);
     c89atomic_thread_fence(c89atomic_memory_order_release);
     c89atomic_store_explicit_32(&pDeque->tail, tail + 1, c89atomic_memory_order_relaxed);
 
@@ -59,7 +59,7 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_tail(c89atomic_d
         /* Not empty. */
         C89ATOMIC_DEQUE_T x;
 
-        x = c89atomic_load_explicit_ptr((volatile void**)&pDeque->buffer[tail & (C89ATOMIC_DEQUE_CAP - 1)], c89atomic_memory_order_relaxed);
+        x = c89atomic_load_explicit_ptr((void* const volatile*)&pDeque->buffer[tail & (C89ATOMIC_DEQUE_CAP - 1)], c89atomic_memory_order_relaxed);
         if (head == tail) {
             /* Last item in queue. In this case the head is moved forward rather than moving the tail backward. */
             c89atomic_bool raceResult = c89atomic_compare_exchange_strong_explicit_32(&pDeque->head, &head, head + 1, c89atomic_memory_order_seq_cst, c89atomic_memory_order_relaxed);
@@ -100,7 +100,7 @@ C89ATOMIC_DEQUE_API c89atomic_deque_result c89atomic_deque_take_head(c89atomic_d
     if (dist < 0x80000000UL && dist != 0) { /* Or alternatively: `if ((c89atomic_int32)(tail - head) > 0)` */
         C89ATOMIC_DEQUE_T x;
 
-        x = c89atomic_load_explicit_ptr((volatile void**)&pDeque->buffer[head & (C89ATOMIC_DEQUE_CAP - 1)], c89atomic_memory_order_relaxed);
+        x = c89atomic_load_explicit_ptr((void* const volatile*)&pDeque->buffer[head & (C89ATOMIC_DEQUE_CAP - 1)], c89atomic_memory_order_relaxed);
         if (!c89atomic_compare_exchange_strong_explicit_32(&pDeque->head, &head, head + 1, c89atomic_memory_order_seq_cst, c89atomic_memory_order_relaxed)) {
             return C89ATOMIC_DEQUE_CANCELLED;   /* Failed race.  */
         }

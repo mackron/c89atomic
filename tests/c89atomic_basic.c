@@ -957,6 +957,15 @@ int main(int argc, char** argv)
     {
         void* dst = NULL;
         void* src = NULL;
+        void* expected = NULL;
+
+        c89atomic_is_lock_free_ptr(&dst);
+        c89atomic_load_explicit_ptr(&dst, c89atomic_memory_order_relaxed);
+        c89atomic_store_explicit_ptr(&dst, src, c89atomic_memory_order_relaxed);
+        c89atomic_exchange_explicit_ptr(&dst, src, c89atomic_memory_order_relaxed);
+        c89atomic_compare_exchange_strong_explicit_ptr(&dst, &expected, src, c89atomic_memory_order_relaxed, c89atomic_memory_order_relaxed);
+        c89atomic_compare_exchange_weak_explicit_ptr(&dst, &expected, src, c89atomic_memory_order_relaxed, c89atomic_memory_order_relaxed);
+        c89atomic_compare_and_swap_ptr(&dst, expected, src);
         c89atomic_exchange_ptr(&dst, src);
         c89atomic_compare_exchange_strong_ptr(&dst, &dst, src);
     }
