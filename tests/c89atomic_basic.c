@@ -449,6 +449,10 @@ void c89atomic_test__basic__fetch_sub(void)
     c89atomic_test__basic_fetch_sub_n(16, 1234);
     c89atomic_test__basic_fetch_sub_n(32, 123456);
     c89atomic_test__basic_fetch_sub_n(64, C89ATOMIC_ULL(123456789012));
+    c89atomic_test__basic_fetch_sub_n(8,  0x80U);
+    c89atomic_test__basic_fetch_sub_n(16, 0x8000U);
+    c89atomic_test__basic_fetch_sub_n(32, 0x80000000UL);
+    c89atomic_test__basic_fetch_sub_n(64, C89ATOMIC_ULL(0x8000000000000000));
     printf("\n");
 }
 

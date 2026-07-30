@@ -1375,22 +1375,22 @@ not represented here.
     /* fetch_sub() */
     static C89ATOMIC_INLINE c89atomic_uint8 __stdcall c89atomic_fetch_sub_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
     {
-        return c89atomic_fetch_add_explicit_8(dst, (c89atomic_uint8)(-(c89atomic_int8)src), order);
+        return c89atomic_fetch_add_explicit_8(dst, (c89atomic_uint8)(0 - src), order);
     }
 
     static C89ATOMIC_INLINE c89atomic_uint16 __stdcall c89atomic_fetch_sub_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
     {
-        return c89atomic_fetch_add_explicit_16(dst, (c89atomic_uint16)(-(c89atomic_int16)src), order);
+        return c89atomic_fetch_add_explicit_16(dst, (c89atomic_uint16)(0 - src), order);
     }
 
     static C89ATOMIC_INLINE c89atomic_uint32 __stdcall c89atomic_fetch_sub_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
     {
-        return c89atomic_fetch_add_explicit_32(dst, (c89atomic_uint32)(-(c89atomic_int32)src), order);
+        return c89atomic_fetch_add_explicit_32(dst, (c89atomic_uint32)(0 - src), order);
     }
 
     static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_sub_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
     {
-        return c89atomic_fetch_add_explicit_64(dst, (c89atomic_uint64)(-(c89atomic_int64)src), order);
+        return c89atomic_fetch_add_explicit_64(dst, (c89atomic_uint64)(0 - src), order);
     }
 
 
@@ -2114,7 +2114,7 @@ not represented here.
         }
         #else
         {
-            C89ATOMIC_FETCH_ADD_LOCK(8, dst, (c89atomic_uint8)(-(c89atomic_int8)src), order);
+            C89ATOMIC_FETCH_ADD_LOCK(8, dst, (c89atomic_uint8)(0 - src), order);
         }
         #endif
     }
@@ -2138,7 +2138,7 @@ not represented here.
         }
         #else
         {
-            C89ATOMIC_FETCH_ADD_LOCK(16, dst, (c89atomic_uint16)(-(c89atomic_int16)src), order);
+            C89ATOMIC_FETCH_ADD_LOCK(16, dst, (c89atomic_uint16)(0 - src), order);
         }
         #endif
     }
@@ -2162,14 +2162,14 @@ not represented here.
         }
         #else
         {
-            C89ATOMIC_FETCH_ADD_LOCK(32, dst, (c89atomic_uint32)(-(c89atomic_int32)src), order);
+            C89ATOMIC_FETCH_ADD_LOCK(32, dst, (c89atomic_uint32)(0 - src), order);
         }
         #endif
     }
 
     static C89ATOMIC_INLINE c89atomic_uint64 __stdcall c89atomic_fetch_sub_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
     {
-        C89ATOMIC_FETCH_ADD_CAS(64, dst, (c89atomic_uint64)(-(c89atomic_int64)src), order);
+        C89ATOMIC_FETCH_ADD_CAS(64, dst, (c89atomic_uint64)(0 - src), order);
     }
 
 
@@ -2624,7 +2624,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_ADD_LOCK(8, dst, (c89atomic_uint8)(-(c89atomic_int8)src), order);
+                C89ATOMIC_FETCH_ADD_LOCK(8, dst, (c89atomic_uint8)(0 - src), order);
             }
             #endif
         }
@@ -2638,7 +2638,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_ADD_LOCK(16, dst, (c89atomic_uint16)(-(c89atomic_int16)src), order);
+                C89ATOMIC_FETCH_ADD_LOCK(16, dst, (c89atomic_uint16)(0 - src), order);
             }
             #endif
         }
@@ -2652,7 +2652,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_ADD_LOCK(32, dst, (c89atomic_uint32)(-(c89atomic_int32)src), order);
+                C89ATOMIC_FETCH_ADD_LOCK(32, dst, (c89atomic_uint32)(0 - src), order);
             }
             #endif
         }
@@ -2666,7 +2666,7 @@ not represented here.
             }
             #else
             {
-                C89ATOMIC_FETCH_ADD_LOCK(64, dst, (c89atomic_uint64)(-(c89atomic_int64)src), order);
+                C89ATOMIC_FETCH_ADD_LOCK(64, dst, (c89atomic_uint64)(0 - src), order);
             }
             #endif
         }
@@ -3461,22 +3461,22 @@ not represented here.
         /* fetch_sub() */
         static C89ATOMIC_INLINE c89atomic_uint8 c89atomic_fetch_sub_explicit_8(volatile c89atomic_uint8* dst, c89atomic_uint8 src, c89atomic_memory_order order)
         {
-            return c89atomic_fetch_add_explicit_8(dst, (c89atomic_uint8)(-(c89atomic_int8)src), order);
+            return c89atomic_fetch_add_explicit_8(dst, (c89atomic_uint8)(0 - src), order);
         }
 
         static C89ATOMIC_INLINE c89atomic_uint16 c89atomic_fetch_sub_explicit_16(volatile c89atomic_uint16* dst, c89atomic_uint16 src, c89atomic_memory_order order)
         {
-            return c89atomic_fetch_add_explicit_16(dst, (c89atomic_uint16)(-(c89atomic_int16)src), order);
+            return c89atomic_fetch_add_explicit_16(dst, (c89atomic_uint16)(0 - src), order);
         }
 
         static C89ATOMIC_INLINE c89atomic_uint32 c89atomic_fetch_sub_explicit_32(volatile c89atomic_uint32* dst, c89atomic_uint32 src, c89atomic_memory_order order)
         {
-            return c89atomic_fetch_add_explicit_32(dst, (c89atomic_uint32)(-(c89atomic_int32)src), order);
+            return c89atomic_fetch_add_explicit_32(dst, (c89atomic_uint32)(0 - src), order);
         }
 
         static C89ATOMIC_INLINE c89atomic_uint64 c89atomic_fetch_sub_explicit_64(volatile c89atomic_uint64* dst, c89atomic_uint64 src, c89atomic_memory_order order)
         {
-            return c89atomic_fetch_add_explicit_64(dst, (c89atomic_uint64)(-(c89atomic_int64)src), order);
+            return c89atomic_fetch_add_explicit_64(dst, (c89atomic_uint64)(0 - src), order);
         }
 
 
