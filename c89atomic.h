@@ -3577,10 +3577,11 @@ not represented here.
     #define c89atomic_store_explicit_64(dst, src, order)            __builtin_atomic_exchange(dst, src)
 
     #define C89ATOMIC_CHIBICC_LOAD(sizeInBits) \
-        static C89ATOMIC_INLINE c89atomic_uint##sizeInBits c89atomic_load_explicit_##sizeInBits(volatile c89atomic_uint##sizeInBits* dst, c89atomic_memory_order order) \
+        static C89ATOMIC_INLINE c89atomic_uint##sizeInBits c89atomic_load_explicit_##sizeInBits(volatile const c89atomic_uint##sizeInBits* dst, c89atomic_memory_order order) \
         { \
             c89atomic_uint##sizeInBits expected = 0; \
-            __builtin_compare_and_swap(dst, &expected, 0); \
+            __builtin_compare_and_swap((volatile c89atomic_uint##sizeInBits*)dst, &expected, 0); \
+            (void)order; \
             return expected; \
         }
 
