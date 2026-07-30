@@ -3224,10 +3224,12 @@ not represented here.
                             : "r"(src)      /* %1 */
                         );
                     } else {
+                        c89atomic_uint8 tmp = src;
                         __asm__ __volatile__ (
-                            "xchgb %1, %0"
-                            : "=m"(*dst)    /* %0 */
-                            : "r"(src)      /* %1 */
+                            "xchgb %0, %1"
+                            : "+r"(tmp),    /* %0 */
+                              "+m"(*dst)    /* %1 */
+                            :
                             : "memory"
                         );
                     }
@@ -3258,10 +3260,12 @@ not represented here.
                             : "r"(src)      /* %1 */
                         );
                     } else {
+                        c89atomic_uint16 tmp = src;
                         __asm__ __volatile__ (
-                            "xchgw %1, %0"
-                            : "=m"(*dst)    /* %0 */
-                            : "r"(src)      /* %1 */
+                            "xchgw %0, %1"
+                            : "+r"(tmp),    /* %0 */
+                              "+m"(*dst)    /* %1 */
+                            :
                             : "memory"
                         );
                     }
@@ -3292,10 +3296,12 @@ not represented here.
                             : "r"(src)      /* %1 */
                         );
                     } else {
+                        c89atomic_uint32 tmp = src;
                         __asm__ __volatile__ (
-                            "xchgl %1, %0"
-                            : "=m"(*dst)    /* %0 */
-                            : "r"(src)      /* %1 */
+                            "xchgl %0, %1"
+                            : "+r"(tmp),    /* %0 */
+                              "+m"(*dst)    /* %1 */
+                            :
                             : "memory"
                         );
                     }
@@ -3326,10 +3332,12 @@ not represented here.
                             : "r"(src)      /* %1 */
                         );
                     } else {
+                        c89atomic_uint64 tmp = src;
                         __asm__ __volatile__ (
-                            "xchgq %1, %0"
-                            : "=m"(*dst)    /* %0 */
-                            : "r"(src)      /* %1 */
+                            "xchgq %0, %1"
+                            : "+r"(tmp),    /* %0 */
+                              "+m"(*dst)    /* %1 */
+                            :
                             : "memory"
                         );
                     }
