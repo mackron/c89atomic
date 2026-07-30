@@ -2246,7 +2246,7 @@ not represented here.
     }
 
     /* atomic_signal_fence */
-    #define c89atomic_signal_fence(order) __asm {}; (void)order
+    #define c89atomic_signal_fence(order) do { __asm {}; (void)order; } while (0)
 #endif
 
 #if defined(C89ATOMIC_MODERN_GCC)
