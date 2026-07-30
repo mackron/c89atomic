@@ -598,6 +598,40 @@ void c89atomic_test__basic__compare_and_swap(void)
 }
 
 
+#define c89atomic_test__basic_fetch_float_explicit(typeName, suffix, operation, initialValue, operand, expectedValue, order) \
+{ \
+    typeName dst = initialValue; \
+    typeName oldValue; \
+    printf("    %-*s", PRINT_WIDTH, c89atomic_memory_order_to_string(order)); \
+    oldValue = c89atomic_fetch_##operation##_explicit_##suffix(&dst, operand, order); \
+    if (oldValue == initialValue && dst == expectedValue) { \
+        c89atomic_test_passed(); \
+    } else { \
+        c89atomic_test_failed(); \
+    } \
+}
+
+#define c89atomic_test__basic_fetch_float(typeName, suffix, operation, initialValue, operand, expectedValue) \
+{ \
+    printf("c89atomic_fetch_" #operation "_" #suffix "():\n"); \
+    c89atomic_test__basic_fetch_float_explicit(typeName, suffix, operation, initialValue, operand, expectedValue, c89atomic_memory_order_relaxed); \
+    c89atomic_test__basic_fetch_float_explicit(typeName, suffix, operation, initialValue, operand, expectedValue, c89atomic_memory_order_consume); \
+    c89atomic_test__basic_fetch_float_explicit(typeName, suffix, operation, initialValue, operand, expectedValue, c89atomic_memory_order_acquire); \
+    c89atomic_test__basic_fetch_float_explicit(typeName, suffix, operation, initialValue, operand, expectedValue, c89atomic_memory_order_release); \
+    c89atomic_test__basic_fetch_float_explicit(typeName, suffix, operation, initialValue, operand, expectedValue, c89atomic_memory_order_acq_rel); \
+    c89atomic_test__basic_fetch_float_explicit(typeName, suffix, operation, initialValue, operand, expectedValue, c89atomic_memory_order_seq_cst); \
+}
+
+void c89atomic_test__basic__fetch_float(void)
+{
+    c89atomic_test__basic_fetch_float(float,  f32, add, 1.25f, 2.5f, 3.75f);
+    c89atomic_test__basic_fetch_float(double, f64, add, 1.25,  2.5,  3.75);
+    c89atomic_test__basic_fetch_float(float,  f32, sub, 3.75f, 2.5f, 1.25f);
+    c89atomic_test__basic_fetch_float(double, f64, sub, 3.75,  2.5,  1.25);
+    printf("\n");
+}
+
+
 #define C89ATOMIC_CHECK_SIZEOF(type, size) \
 { \
     printf("sizeof(%s)%*.s== %d ", #type, 17 - (int)strlen(#type), "", size); \
@@ -904,6 +938,7 @@ int main(int argc, char** argv)
     c89atomic_test__basic__fetch_xor();
     c89atomic_test__basic__fetch_and();
     c89atomic_test__basic__compare_and_swap();
+    c89atomic_test__basic__fetch_float();
 
     printf("c89atomic_is_lock_free_8  = %s\n", c89atomic_is_lock_free_8(NULL)  ? "\033[32mTRUE\033[0m" : "\033[31mFALSE\033[0m");
     printf("c89atomic_is_lock_free_16 = %s\n", c89atomic_is_lock_free_16(NULL) ? "\033[32mTRUE\033[0m" : "\033[31mFALSE\033[0m");

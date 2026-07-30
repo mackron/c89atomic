@@ -4083,39 +4083,55 @@ static C89ATOMIC_INLINE c89atomic_bool c89atomic_compare_exchange_weak_explicit_
 
 static C89ATOMIC_INLINE float c89atomic_fetch_add_explicit_f32(volatile float* dst, float src, c89atomic_memory_order order)
 {
-    c89atomic_if32 r;
-    c89atomic_if32 x;
-    x.f = src;
-    r.i = c89atomic_fetch_add_explicit_32((volatile c89atomic_uint32*)dst, x.i, order);
-    return r.f;
+    float oldValue;
+    float newValue;
+
+    oldValue = c89atomic_load_explicit_f32(dst, c89atomic_memory_order_relaxed);
+    do {
+        newValue = oldValue + src;
+    } while (!c89atomic_compare_exchange_weak_explicit_f32(dst, &oldValue, newValue, order, c89atomic_memory_order_relaxed));
+
+    return oldValue;
 }
 
 static C89ATOMIC_INLINE double c89atomic_fetch_add_explicit_f64(volatile double* dst, double src, c89atomic_memory_order order)
 {
-    c89atomic_if64 r;
-    c89atomic_if64 x;
-    x.f = src;
-    r.i = c89atomic_fetch_add_explicit_64((volatile c89atomic_uint64*)dst, x.i, order);
-    return r.f;
+    double oldValue;
+    double newValue;
+
+    oldValue = c89atomic_load_explicit_f64(dst, c89atomic_memory_order_relaxed);
+    do {
+        newValue = oldValue + src;
+    } while (!c89atomic_compare_exchange_weak_explicit_f64(dst, &oldValue, newValue, order, c89atomic_memory_order_relaxed));
+
+    return oldValue;
 }
 
 
 static C89ATOMIC_INLINE float c89atomic_fetch_sub_explicit_f32(volatile float* dst, float src, c89atomic_memory_order order)
 {
-    c89atomic_if32 r;
-    c89atomic_if32 x;
-    x.f = src;
-    r.i = c89atomic_fetch_sub_explicit_32((volatile c89atomic_uint32*)dst, x.i, order);
-    return r.f;
+    float oldValue;
+    float newValue;
+
+    oldValue = c89atomic_load_explicit_f32(dst, c89atomic_memory_order_relaxed);
+    do {
+        newValue = oldValue - src;
+    } while (!c89atomic_compare_exchange_weak_explicit_f32(dst, &oldValue, newValue, order, c89atomic_memory_order_relaxed));
+
+    return oldValue;
 }
 
 static C89ATOMIC_INLINE double c89atomic_fetch_sub_explicit_f64(volatile double* dst, double src, c89atomic_memory_order order)
 {
-    c89atomic_if64 r;
-    c89atomic_if64 x;
-    x.f = src;
-    r.i = c89atomic_fetch_sub_explicit_64((volatile c89atomic_uint64*)dst, x.i, order);
-    return r.f;
+    double oldValue;
+    double newValue;
+
+    oldValue = c89atomic_load_explicit_f64(dst, c89atomic_memory_order_relaxed);
+    do {
+        newValue = oldValue - src;
+    } while (!c89atomic_compare_exchange_weak_explicit_f64(dst, &oldValue, newValue, order, c89atomic_memory_order_relaxed));
+
+    return oldValue;
 }
 
 
