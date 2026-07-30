@@ -764,8 +764,8 @@ These functions are mandatory. If they cannot be implemented a compile time erro
     }
 #endif
 
-#define c89atomic_flag_test_and_set(dst) c89atomic_flag_test_and_set_explicit(dst, c89atomic_memory_order_acquire)
-#define c89atomic_flag_clear(dst)        c89atomic_flag_clear_explicit(dst, c89atomic_memory_order_release)
+#define c89atomic_flag_test_and_set(dst) c89atomic_flag_test_and_set_explicit(dst, c89atomic_memory_order_seq_cst)
+#define c89atomic_flag_clear(dst)        c89atomic_flag_clear_explicit(dst, c89atomic_memory_order_seq_cst)
 /* END c89atomic_flag.h */
 
 /* BEG c89atomic_spinlock.h */
